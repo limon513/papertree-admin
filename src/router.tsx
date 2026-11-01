@@ -111,6 +111,32 @@ export const router = createBrowserRouter([
             },
           },
           {
+            path: 'imports',
+            lazy: async () => {
+              const { ImportsPage } = await import('@/pages/imports-page');
+              return {
+                Component: () => (
+                  <RequireModule module="imports">
+                    <ImportsPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
+            path: 'imports/:id',
+            lazy: async () => {
+              const { ImportDetailPage } = await import('@/pages/import-detail-page');
+              return {
+                Component: () => (
+                  <RequireModule module="imports">
+                    <ImportDetailPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
             path: 'categories',
             lazy: async () => {
               const { CategoriesPage } = await import('@/pages/categories-page');

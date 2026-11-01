@@ -213,3 +213,49 @@ export interface StockLocation {
   isDefault: boolean;
   isActive: boolean;
 }
+
+export type ImportStatus = 'preview' | 'queued' | 'running' | 'done' | 'failed' | 'cancelled';
+export type ImportAction = 'create' | 'update' | 'skip' | 'error';
+
+export interface ImportJob {
+  id: number;
+  status: ImportStatus;
+  fileName: string;
+  format: 'papertree' | 'woocommerce';
+  options: { existing: 'skip' | 'update'; status: 'file' | 'draft'; createMissing: boolean };
+  total: number;
+  processed: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  failed: number;
+  error: string | null;
+  createdBy: { id: number; name: string } | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  createdAt: string;
+  /** What the check decided, per product. */
+  preview: Record<ImportAction, number>;
+}
+
+export interface ImportRow {
+  id: number;
+  position: number;
+  lines: number[];
+  name: string;
+  action: ImportAction;
+  status: 'pending' | 'done' | 'skipped' | 'failed';
+  message: string | null;
+  productId: number | null;
+  variants: number;
+  images: number;
+  price: number | null;
+}
+
+export interface ImportDetail {
+  job: ImportJob;
+  rows: ImportRow[];
+  rowsTotal: number;
+  page: number;
+  pageSize: number;
+}
