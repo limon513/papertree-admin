@@ -1,0 +1,11 @@
+// Cloudflare Workers deploy: serves the built admin panel (dist/) as static files.
+// Static file requests are free and unlimited on the free plan.
+{
+  "name": "papertree-admin",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    // Unknown paths (e.g. /staff on a page reload) get index.html, and React Router takes over.
+    "not_found_handling": "single-page-application"
+  }
+}

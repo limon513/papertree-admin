@@ -12,9 +12,23 @@ Admin panel for PaperTree Bangladesh. React 19, Vite, Tailwind CSS 4, TanStack Q
    ```
 3. Open http://localhost:5173 and sign in.
 
-The admin panel calls the API on its own address (`/v1/...`). In development Vite forwards
+In development the admin panel calls the API on its own address (`/v1/...`), and Vite forwards
 those calls to `http://localhost:4000` (change with `API_PROXY_TARGET` in `.env`).
-On Vercel, a rewrite will forward them to the API the same way.
+
+## Deploy (Cloudflare Workers)
+
+The built panel is plain static files, served by Cloudflare for free (`wrangler.jsonc`).
+
+1. In Cloudflare: **Workers & Pages > Create > Import a repository**, pick this repo.
+2. Build command: `npm run build`. Deploy command: `npx wrangler deploy`.
+3. Add a build variable `VITE_API_URL` = `https://papertree-api.bitnbyteit.com`.
+4. Add the custom domain `papertree-admin.bitnbyteit.com`.
+
+The admin and the API must be on the same main domain (both on `bitnbyteit.com`).
+Otherwise browsers block the sign-in cookie.
+
+`public/_headers` keeps the panel out of search engines and caches built files for a year
+(their names change on every build).
 
 ## Folder layout
 

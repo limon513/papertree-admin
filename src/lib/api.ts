@@ -19,11 +19,17 @@ interface RequestOptions {
   signal?: AbortSignal;
 }
 
+/**
+ * API address. Empty in development (Vite forwards /v1 to the local API).
+ * Set VITE_API_URL at build time for deploys, e.g. https://papertree-api.bitnbyteit.com
+ */
+const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
+
 /** Calls the API. The session cookie is sent automatically. */
 export async function api<T>(path: string, { method = 'GET', body, signal }: RequestOptions = {}): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(path, {
+    res = await fetch(API_URL + path, {
       method,
       credentials: 'include',
       signal,
