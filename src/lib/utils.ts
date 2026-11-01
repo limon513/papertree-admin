@@ -48,3 +48,10 @@ export function slugify(text: string) {
     .slice(0, 100)
     .replace(/^-+|-+$/g, '');
 }
+
+const taka = new Intl.NumberFormat('en-BD', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+/** "৳1,250" or "৳1,250.50". */
+export function formatMoney(value: number | null | undefined) {
+  return value === null || value === undefined ? '—' : `৳${taka.format(value)}`;
+}

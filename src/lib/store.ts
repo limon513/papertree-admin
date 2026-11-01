@@ -10,6 +10,7 @@ export const STORE_DOMAIN = 'papertree.com.bd';
 export const STORE_PATHS = {
   category: '/product-category/',
   brand: '/brand/',
+  product: '/product/',
 } as const;
 
 /** Address of an icon file from the icon list. */
