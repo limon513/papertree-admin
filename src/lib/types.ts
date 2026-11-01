@@ -70,6 +70,10 @@ export interface Category {
   name: string;
   slug: string;
   description: string | null;
+  imageId: number | null;
+  image: Media | null;
+  /** Key from the icon list, shown when there is no image. */
+  icon: string | null;
   sortOrder: number;
   isActive: boolean;
   seoTitle: string | null;
@@ -83,10 +87,32 @@ export interface Brand {
   name: string;
   slug: string;
   description: string | null;
+  imageId: number | null;
+  image: Media | null;
+  /** Key from the icon list, shown when there is no image. */
+  icon: string | null;
   isActive: boolean;
   isFeatured: boolean;
   seoTitle: string | null;
   seoDescription: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** An uploaded image, saved in several widths. */
+export interface Media {
+  id: number;
+  /** Largest saved width. */
+  url: string;
+  /** URL per saved width, e.g. { "160": "…", "400": "…" }. */
+  urls: Record<string, string>;
+  width: number;
+  height: number;
+  alt: string | null;
+  originalName: string | null;
+}
+
+export interface IconGroup {
+  label: string;
+  icons: { key: string; label: string }[];
 }

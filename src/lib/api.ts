@@ -15,6 +15,7 @@ export class ApiError extends Error {
 
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
+  /** JSON-encoded, or sent as-is when it is FormData (file uploads). */
   body?: unknown;
   signal?: AbortSignal;
 }
@@ -23,7 +24,7 @@ interface RequestOptions {
  * API address. Empty in development (Vite forwards /v1 to the local API).
  * Set VITE_API_URL at build time for deploys, e.g. https://papertree-api.bitnbyteit.com
  */
-const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
+export const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
 
 /** Calls the API. The session cookie is sent automatically. */
 export async function api<T>(path: string, { method = 'GET', body, signal }: RequestOptions = {}): Promise<T> {
@@ -33,8 +34,8 @@ export async function api<T>(path: string, { method = 'GET', body, signal }: Req
       method,
       credentials: 'include',
       signal,
-      headers: body === undefined ? undefined : { 'content-type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      headers: body === undefined || body instanceof FormData ? undefined : { 'content-type': 'application/json' },
+      body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
     });
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') throw err;

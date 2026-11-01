@@ -21,8 +21,10 @@ import {
 } from '@/hooks/use-catalog';
 import { ApiError, errorMessage } from '@/lib/api';
 import { STORE_PATHS } from '@/lib/store';
-import type { Category } from '@/lib/types';
+import type { Category, Media } from '@/lib/types';
 import { cn, slugify } from '@/lib/utils';
+import { CatalogThumb } from '@/components/catalog/catalog-thumb';
+import { PictureField } from '@/components/catalog/picture-field';
 import { SeoFields } from '@/components/catalog/seo-fields';
 import { SlugField, useSlug } from '@/components/catalog/slug-field';
 import { PageHeader } from '@/components/layout/page-header';
@@ -312,6 +314,8 @@ function CategoryRow({
         <span className="size-7 shrink-0" />
       )}
 
+      <CatalogThumb image={c.image} icon={c.icon} name={c.name} muted={!c.isActive} className="size-8" />
+
       <button type="button" onClick={onEdit} className="min-w-0 cursor-pointer py-1 text-left">
         <span className={cn('block truncate text-sm font-medium', c.isActive ? 'text-zinc-900' : 'text-zinc-500')}>
           {c.name}
@@ -419,6 +423,8 @@ function CategoryFormDialog({
   const { slug, setSlug, changed } = useSlug(name, category?.slug);
   const [parentId, setParentId] = useState(initialParentId === null ? '' : String(initialParentId));
   const [description, setDescription] = useState(category?.description ?? '');
+  const [image, setImage] = useState<Media | null>(category?.image ?? null);
+  const [icon, setIcon] = useState<string | null>(category?.icon ?? null);
   const [isActive, setIsActive] = useState(category?.isActive ?? true);
   const [seoTitle, setSeoTitle] = useState(category?.seoTitle ?? '');
   const [seoDescription, setSeoDescription] = useState(category?.seoDescription ?? '');
@@ -444,6 +450,8 @@ function CategoryFormDialog({
       slug: slugify(slug),
       parentId: parentId ? Number(parentId) : null,
       description: description.trim() || null,
+      imageId: image?.id ?? null,
+      icon,
       isActive,
       seoTitle: seoTitle.trim() || null,
       seoDescription: seoDescription.trim() || null,
@@ -528,6 +536,15 @@ function CategoryFormDialog({
               invalid={!!fields.description}
             />
           </Field>
+
+          <PictureField
+            imageLabel="Image"
+            image={image}
+            onImageChange={setImage}
+            icon={icon}
+            onIconChange={setIcon}
+            error={fields.imageId ?? fields.icon}
+          />
 
           <SwitchField
             id="category-active"
