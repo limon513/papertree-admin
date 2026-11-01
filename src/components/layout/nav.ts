@@ -1,0 +1,69 @@
+import type { LucideIcon } from 'lucide-react';
+import {
+  BarChart3,
+  Download,
+  Inbox,
+  LayoutDashboard,
+  LayoutTemplate,
+  Megaphone,
+  Package,
+  Settings,
+  ShieldCheck,
+  ShoppingCart,
+  UserCog,
+  Users,
+} from 'lucide-react';
+import type { ModuleKey } from '@/lib/types';
+
+export interface NavItem {
+  label: string;
+  to: string;
+  icon: LucideIcon;
+  /** Shown only if the role has this module. */
+  module?: ModuleKey;
+  /** Shown only to Super Admins. */
+  superAdminOnly?: boolean;
+}
+
+export interface NavGroup {
+  label?: string;
+  items: NavItem[];
+}
+
+export const NAV: NavGroup[] = [
+  { items: [{ label: 'Dashboard', to: '/', icon: LayoutDashboard }] },
+  {
+    label: 'Catalog',
+    items: [
+      { label: 'Products', to: '/products', icon: Package, module: 'products' },
+      { label: 'Product Imports', to: '/imports', icon: Download, module: 'imports' },
+    ],
+  },
+  {
+    label: 'Sales',
+    items: [
+      { label: 'Orders', to: '/orders', icon: ShoppingCart, module: 'orders' },
+      { label: 'Customers', to: '/customers', icon: Users, module: 'customers' },
+      { label: 'Requests & Leads', to: '/leads', icon: Inbox, module: 'leads' },
+    ],
+  },
+  {
+    label: 'Store',
+    items: [
+      { label: 'Marketing', to: '/marketing', icon: Megaphone, module: 'marketing' },
+      { label: 'Website Content', to: '/content', icon: LayoutTemplate, module: 'content' },
+      { label: 'Reports', to: '/reports', icon: BarChart3, module: 'reports' },
+    ],
+  },
+  {
+    label: 'Admin',
+    items: [
+      { label: 'Settings', to: '/settings', icon: Settings, module: 'settings' },
+      { label: 'Staff', to: '/staff', icon: UserCog, superAdminOnly: true },
+      { label: 'Roles', to: '/roles', icon: ShieldCheck, superAdminOnly: true },
+    ],
+  },
+];
+
+/** Sections that exist in the menu but are built in later steps. */
+export const COMING_SOON = NAV.flatMap((g) => g.items).filter((i) => i.module);

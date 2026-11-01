@@ -1,0 +1,49 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* PaperTree green */
+  --color-brand-50: #f0f9f1;
+  --color-brand-100: #dcf0de;
+  --color-brand-200: #bbe1c0;
+  --color-brand-300: #8dca96;
+  --color-brand-400: #58ab66;
+  --color-brand-500: #348f44;
+  --color-brand-600: #247235;
+  --color-brand-700: #1d5b2c;
+  --color-brand-800: #1a4926;
+  --color-brand-900: #163c21;
+  --color-brand-950: #0a2111;
+
+  --animate-fade-in: fade-in 150ms ease-out;
+  --animate-zoom-in: zoom-in 150ms ease-out;
+  --animate-slide-in-left: slide-in-left 200ms ease-out;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes zoom-in {
+    from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+  @keyframes slide-in-left {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply bg-zinc-50 text-zinc-900;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+}
