@@ -5,9 +5,8 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  // The admin panel calls the API on the same address (/v1/...). In development
-  // Vite forwards those calls to the API; in the demo deploy Vercel does the same.
-  // Same-address calls keep the session cookie simple and safe.
+  // In development the admin panel calls the API on its own address (/v1/..., /icons/...)
+  // and Vite forwards those calls to the API. Deploys call the API address (VITE_API_URL).
   const apiTarget = env.API_PROXY_TARGET || 'http://localhost:4000';
 
   return {
@@ -17,6 +16,7 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       proxy: {
         '/v1': { target: apiTarget, changeOrigin: true },
+        '/icons': { target: apiTarget, changeOrigin: true },
       },
     },
   };

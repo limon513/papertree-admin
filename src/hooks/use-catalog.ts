@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { Brand, Category, ListResponse } from '@/lib/types';
+import type { Brand, Category, IconGroup, ListResponse, Media } from '@/lib/types';
 
 const CATEGORIES_KEY = ['categories'] as const;
 const BRANDS_KEY = ['brands'] as const;
@@ -11,6 +11,8 @@ export interface CategoryInput {
   slug: string;
   parentId: number | null;
   description: string | null;
+  imageId: number | null;
+  icon: string | null;
   isActive: boolean;
   seoTitle: string | null;
   seoDescription: string | null;
@@ -21,6 +23,8 @@ export interface BrandInput {
   /** Empty = make one from the name. */
   slug: string;
   description: string | null;
+  imageId: number | null;
+  icon: string | null;
   isActive: boolean;
   isFeatured: boolean;
   seoTitle: string | null;
@@ -95,5 +99,27 @@ export function useDeleteBrand() {
   return useMutation({
     mutationFn: (id: number) => api<void>(`/v1/admin/brands/${id}`, { method: 'DELETE' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: BRANDS_KEY }),
+  });
+}
+
+// ---- Images and icons ----
+
+/** Uploads one image. The API saves it in several sizes and returns their URLs. */
+export function useUploadImage() {
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return api<Media>('/v1/admin/media', { method: 'POST', body: form });
+    },
+  });
+}
+
+/** The icon list never changes while the panel is open. */
+export function useIcons() {
+  return useQuery({
+    queryKey: ['icons'],
+    queryFn: () => api<{ groups: IconGroup[] }>('/v1/admin/icons'),
+    staleTime: Infinity,
   });
 }

@@ -4,8 +4,10 @@ import { toast } from 'sonner';
 import { useBrands, useDeleteBrand, useSaveBrand, type BrandInput } from '@/hooks/use-catalog';
 import { ApiError, errorMessage } from '@/lib/api';
 import { STORE_PATHS } from '@/lib/store';
-import type { Brand } from '@/lib/types';
+import type { Brand, Media } from '@/lib/types';
 import { cn, slugify } from '@/lib/utils';
+import { CatalogThumb } from '@/components/catalog/catalog-thumb';
+import { PictureField } from '@/components/catalog/picture-field';
 import { SeoFields } from '@/components/catalog/seo-fields';
 import { SlugField, useSlug } from '@/components/catalog/slug-field';
 import { PageHeader } from '@/components/layout/page-header';
@@ -171,15 +173,13 @@ export function BrandsPage() {
                               onClick={() => setForm({ brand })}
                               className="flex cursor-pointer items-center gap-3 text-left"
                             >
-                              <span
-                                className={cn(
-                                  'flex size-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold',
-                                  brand.isActive ? 'bg-brand-50 text-brand-800' : 'bg-zinc-100 text-zinc-500',
-                                )}
-                                aria-hidden
-                              >
-                                {brand.name.charAt(0).toUpperCase()}
-                              </span>
+                              <CatalogThumb
+                                image={brand.image}
+                                icon={brand.icon}
+                                name={brand.name}
+                                muted={!brand.isActive}
+                                className="size-10"
+                              />
                               <span className="min-w-0">
                                 <span
                                   className={cn(
@@ -302,6 +302,8 @@ function BrandFormDialog({ brand, onDone }: { brand: Brand | null; onDone: () =>
   const [name, setName] = useState(brand?.name ?? '');
   const { slug, setSlug, changed } = useSlug(name, brand?.slug);
   const [description, setDescription] = useState(brand?.description ?? '');
+  const [image, setImage] = useState<Media | null>(brand?.image ?? null);
+  const [icon, setIcon] = useState<string | null>(brand?.icon ?? null);
   const [isActive, setIsActive] = useState(brand?.isActive ?? true);
   const [isFeatured, setIsFeatured] = useState(brand?.isFeatured ?? false);
   const [seoTitle, setSeoTitle] = useState(brand?.seoTitle ?? '');
@@ -316,6 +318,8 @@ function BrandFormDialog({ brand, onDone }: { brand: Brand | null; onDone: () =>
       name,
       slug: slugify(slug),
       description: description.trim() || null,
+      imageId: image?.id ?? null,
+      icon,
       isActive,
       isFeatured,
       seoTitle: seoTitle.trim() || null,
@@ -372,6 +376,15 @@ function BrandFormDialog({ brand, onDone }: { brand: Brand | null; onDone: () =>
               invalid={!!fields.description}
             />
           </Field>
+
+          <PictureField
+            imageLabel="Logo"
+            image={image}
+            onImageChange={setImage}
+            icon={icon}
+            onIconChange={setIcon}
+            error={fields.imageId ?? fields.icon}
+          />
 
           <div className="grid gap-3 sm:grid-cols-2">
             <SwitchField
