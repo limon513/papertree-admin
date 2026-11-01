@@ -192,6 +192,10 @@ export interface ProductListItem {
   onSale: boolean;
   /** null when no variant tracks stock. */
   totalStock: number | null;
+  /** Variants with no stock left. */
+  variantsOut: number;
+  /** Variants at or below their low-stock level. */
+  variantsLow: number;
   updatedAt: string;
 }
 

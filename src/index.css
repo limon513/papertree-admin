@@ -2,7 +2,9 @@
 @import '@fontsource-variable/inter';
 
 @theme {
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Inter has no taka sign (৳), so the next fonts draw it: Windows, Android, Apple. */
+  --font-sans: 'Inter Variable', 'Nirmala UI', 'Noto Sans Bengali', 'Bangla Sangam MN', ui-sans-serif, system-ui,
+    -apple-system, 'Segoe UI', sans-serif;
 
   /* PaperTree green */
   --color-brand-50: #f0f9f1;
