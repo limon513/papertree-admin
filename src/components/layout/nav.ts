@@ -41,7 +41,14 @@ export const NAV: NavGroup[] = [
   {
     label: 'Catalog',
     items: [
-      { label: 'Products', to: '/products', icon: Package, module: 'products' },
+      {
+        label: 'Products',
+        to: '/products',
+        icon: Package,
+        module: 'products',
+        ready: true,
+        description: 'Add and edit products, prices and stock',
+      },
       {
         label: 'Categories',
         to: '/categories',

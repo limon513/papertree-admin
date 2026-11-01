@@ -116,3 +116,96 @@ export interface IconGroup {
   label: string;
   icons: { key: string; label: string }[];
 }
+
+export type ProductStatus = 'draft' | 'active' | 'archived';
+
+export interface ProductOption {
+  name: string;
+  values: string[];
+}
+
+export interface ProductSpec {
+  name: string;
+  value: string;
+}
+
+export interface StockLevel {
+  locationId: number;
+  quantity: number;
+}
+
+export interface ProductVariant {
+  id: number;
+  option1: string | null;
+  option2: string | null;
+  option3: string | null;
+  sku: string | null;
+  barcode: string | null;
+  price: number;
+  salePrice: number | null;
+  saleStartsAt: string | null;
+  saleEndsAt: string | null;
+  wholesalePrice: number | null;
+  costPrice: number | null;
+  weightGrams: number | null;
+  imageId: number | null;
+  image: Media | null;
+  trackStock: boolean;
+  allowBackorder: boolean;
+  lowStockThreshold: number | null;
+  position: number;
+  stock: StockLevel[];
+}
+
+export interface Product {
+  id: number;
+  name: string;
+  slug: string;
+  status: ProductStatus;
+  shortDescription: string | null;
+  description: string | null;
+  brandId: number | null;
+  categoryIds: number[];
+  primaryCategoryId: number | null;
+  tags: string[];
+  images: Media[];
+  options: ProductOption[];
+  specs: ProductSpec[];
+  variants: ProductVariant[];
+  seoTitle: string | null;
+  seoDescription: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductListItem {
+  id: number;
+  name: string;
+  slug: string;
+  status: ProductStatus;
+  image: Media | null;
+  brand: { id: number; name: string } | null;
+  variantCount: number;
+  priceMin: number;
+  priceMax: number;
+  onSale: boolean;
+  /** null when no variant tracks stock. */
+  totalStock: number | null;
+  updatedAt: string;
+}
+
+export interface ProductList {
+  items: ProductListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  counts: Record<'all' | ProductStatus, number>;
+}
+
+export interface StockLocation {
+  id: number;
+  name: string;
+  isDefault: boolean;
+  isActive: boolean;
+}

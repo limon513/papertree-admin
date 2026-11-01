@@ -24,6 +24,30 @@ export function Input({ className, invalid, ...props }: InputProps) {
   return <input className={cn(inputClasses(invalid), className)} aria-invalid={invalid || undefined} {...props} />;
 }
 
+/** Input with a fixed label inside the box, e.g. "৳" before a price or "g" after a weight. */
+export function AddonInput({
+  prefix,
+  suffix,
+  className,
+  ...props
+}: InputProps & { prefix?: string; suffix?: string }) {
+  return (
+    <div className="relative">
+      {prefix && (
+        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-base font-medium text-zinc-500">
+          {prefix}
+        </span>
+      )}
+      <Input className={cn(prefix && 'pl-7', suffix && 'pr-9', className)} {...props} />
+      {suffix && (
+        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-zinc-500">
+          {suffix}
+        </span>
+      )}
+    </div>
+  );
+}
+
 /** Password input with a show/hide button. */
 export function PasswordInput({ className, invalid, ...props }: InputProps) {
   const [visible, setVisible] = useState(false);

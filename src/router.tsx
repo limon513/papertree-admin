@@ -84,6 +84,33 @@ export const router = createBrowserRouter([
             },
           },
           {
+            path: 'products',
+            lazy: async () => {
+              const { ProductsPage } = await import('@/pages/products-page');
+              return {
+                Component: () => (
+                  <RequireModule module="products">
+                    <ProductsPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
+            // Same page for a new product (/products/new) and an existing one (/products/12).
+            path: 'products/:id',
+            lazy: async () => {
+              const { ProductEditPage } = await import('@/pages/product-edit-page');
+              return {
+                Component: () => (
+                  <RequireModule module="products">
+                    <ProductEditPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
             path: 'categories',
             lazy: async () => {
               const { CategoriesPage } = await import('@/pages/categories-page');
