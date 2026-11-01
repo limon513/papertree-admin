@@ -9,7 +9,8 @@ export interface ProductFilters {
   status?: ProductStatus;
   brandId?: number;
   categoryId?: number;
-  sort?: 'updated' | 'name' | 'price';
+  stock?: 'low' | 'out';
+  sort?: 'updated' | 'name' | 'price' | 'stock';
   page?: number;
 }
 
@@ -64,11 +65,13 @@ export function useProducts(filters: ProductFilters) {
   });
 }
 
-export function useProduct(id: number | undefined) {
+/** `fresh`: always load again when shown (for stock numbers that must be current). */
+export function useProduct(id: number | undefined, { fresh = false }: { fresh?: boolean } = {}) {
   return useQuery({
     queryKey: [...PRODUCTS_KEY, 'detail', id],
     queryFn: () => api<Product>(`/v1/admin/products/${id}`),
     enabled: id !== undefined,
+    refetchOnMount: fresh ? 'always' : true,
   });
 }
 
@@ -107,5 +110,41 @@ export function useStockLocations() {
     queryKey: ['stock-locations'],
     queryFn: () => api<ListResponse<StockLocation>>('/v1/admin/stock-locations'),
     staleTime: 5 * 60_000,
+  });
+}
+
+export type BulkAction =
+  | { action: 'set-status'; status: ProductStatus }
+  | { action: 'add-category' | 'remove-category'; categoryId: number }
+  | { action: 'set-brand'; brandId: number | null }
+  | { action: 'delete' };
+
+/** One change for many products. */
+export function useBulkProducts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: BulkAction & { ids: number[] }) =>
+      api<{ updated: number }>('/v1/admin/products/bulk', { method: 'POST', body: input }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PRODUCTS_KEY }),
+  });
+}
+
+export interface StockChange {
+  variantId: number;
+  locationId: number;
+  quantity: number;
+  baseQuantity?: number;
+}
+
+/** Quick stock changes, e.g. after a delivery. */
+export function useUpdateStock() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { changes: StockChange[]; note: string | null }) =>
+      api<{ levels: { variantId: number; locationId: number; quantity: number }[] }>('/v1/admin/products/stock', {
+        method: 'PATCH',
+        body: input,
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PRODUCTS_KEY }),
   });
 }
