@@ -83,6 +83,32 @@ export const router = createBrowserRouter([
               };
             },
           },
+          {
+            path: 'categories',
+            lazy: async () => {
+              const { CategoriesPage } = await import('@/pages/categories-page');
+              return {
+                Component: () => (
+                  <RequireModule module="products">
+                    <CategoriesPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
+            path: 'brands',
+            lazy: async () => {
+              const { BrandsPage } = await import('@/pages/brands-page');
+              return {
+                Component: () => (
+                  <RequireModule module="products">
+                    <BrandsPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
           ...COMING_SOON.map((item) => ({
             path: item.to.slice(1),
             lazy: async () => {

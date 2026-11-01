@@ -58,7 +58,7 @@ export function DialogFooter({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       className={cn(
-        'flex flex-col-reverse gap-2 border-t border-zinc-100 bg-zinc-50/60 px-5 py-3 sm:flex-row sm:justify-end',
+        'sticky bottom-0 flex flex-col-reverse gap-2 rounded-b-xl border-t border-zinc-100 bg-zinc-50 px-5 py-3 sm:flex-row sm:justify-end',
         className,
       )}
       {...props}

@@ -34,7 +34,7 @@ export function DashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {sections.map((item) => {
-          const ready = item.superAdminOnly;
+          const ready = item.ready;
           return (
             <Link
               key={item.to}
@@ -50,8 +50,7 @@ export function DashboardPage() {
                   {!ready && <Badge>Coming soon</Badge>}
                 </span>
                 <span className="mt-1 block text-sm text-zinc-500">
-                  {describe(item.module) ??
-                    (item.to === '/staff' ? 'Add staff and control who can sign in' : 'Decide what each role can open')}
+                  {item.description ?? describe(item.module)}
                 </span>
               </span>
               <ArrowRight className="mt-1 size-4 shrink-0 text-zinc-300 transition group-hover:translate-x-0.5 group-hover:text-brand-600" />

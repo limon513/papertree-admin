@@ -37,3 +37,14 @@ export function formatDateTime(value: string | null | undefined) {
   if (!value) return '—';
   return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 }
+
+/** "Art & Craft Paper (A4)" -> "art-craft-paper-a4". Same rules as the API. */
+export function slugify(text: string) {
+  return text
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .slice(0, 100)
+    .replace(/^-+|-+$/g, '');
+}

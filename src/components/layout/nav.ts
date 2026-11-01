@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   BarChart3,
   Download,
+  FolderTree,
   Inbox,
   LayoutDashboard,
   LayoutTemplate,
@@ -10,6 +11,7 @@ import {
   Settings,
   ShieldCheck,
   ShoppingCart,
+  Tags,
   UserCog,
   Users,
 } from 'lucide-react';
@@ -23,6 +25,10 @@ export interface NavItem {
   module?: ModuleKey;
   /** Shown only to Super Admins. */
   superAdminOnly?: boolean;
+  /** The page is built. Others show a "coming soon" page. */
+  ready?: boolean;
+  /** Dashboard card text. Defaults to the module description. */
+  description?: string;
 }
 
 export interface NavGroup {
@@ -31,11 +37,27 @@ export interface NavGroup {
 }
 
 export const NAV: NavGroup[] = [
-  { items: [{ label: 'Dashboard', to: '/', icon: LayoutDashboard }] },
+  { items: [{ label: 'Dashboard', to: '/', icon: LayoutDashboard, ready: true }] },
   {
     label: 'Catalog',
     items: [
       { label: 'Products', to: '/products', icon: Package, module: 'products' },
+      {
+        label: 'Categories',
+        to: '/categories',
+        icon: FolderTree,
+        module: 'products',
+        ready: true,
+        description: 'Group products so customers can find them',
+      },
+      {
+        label: 'Brands',
+        to: '/brands',
+        icon: Tags,
+        module: 'products',
+        ready: true,
+        description: 'Brands for products and the brand shop',
+      },
       { label: 'Product Imports', to: '/imports', icon: Download, module: 'imports' },
     ],
   },
@@ -59,11 +81,25 @@ export const NAV: NavGroup[] = [
     label: 'Admin',
     items: [
       { label: 'Settings', to: '/settings', icon: Settings, module: 'settings' },
-      { label: 'Staff', to: '/staff', icon: UserCog, superAdminOnly: true },
-      { label: 'Roles', to: '/roles', icon: ShieldCheck, superAdminOnly: true },
+      {
+        label: 'Staff',
+        to: '/staff',
+        icon: UserCog,
+        superAdminOnly: true,
+        ready: true,
+        description: 'Add staff and control who can sign in',
+      },
+      {
+        label: 'Roles',
+        to: '/roles',
+        icon: ShieldCheck,
+        superAdminOnly: true,
+        ready: true,
+        description: 'Decide what each role can open',
+      },
     ],
   },
 ];
 
 /** Sections that exist in the menu but are built in later steps. */
-export const COMING_SOON = NAV.flatMap((g) => g.items).filter((i) => i.module);
+export const COMING_SOON = NAV.flatMap((g) => g.items).filter((i) => i.module && !i.ready);

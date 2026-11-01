@@ -63,3 +63,30 @@ export interface Role {
 export interface ListResponse<T> {
   items: T[];
 }
+
+export interface Category {
+  id: number;
+  parentId: number | null;
+  name: string;
+  slug: string;
+  description: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Brand {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  isActive: boolean;
+  isFeatured: boolean;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
