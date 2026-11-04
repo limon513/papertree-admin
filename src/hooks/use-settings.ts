@@ -6,6 +6,7 @@ import type {
   DeliveryQuote,
   DeliveryZone,
   ListResponse,
+  Media,
   SettingsResponse,
   StockLocationRow,
   StoreSettings,
@@ -39,7 +40,7 @@ export function useSaveCheckout() {
 export function useBdLocations() {
   return useQuery({
     queryKey: ['bd-locations'],
-    queryFn: () => api<BdLocations>('/v1/admin/settings/locations'),
+    queryFn: () => api<BdLocations>('/v1/admin/places'),
     staleTime: Infinity,
     gcTime: Infinity,
   });
@@ -130,5 +131,14 @@ export function useDeleteStockLocation() {
   return useMutation({
     mutationFn: (id: number) => api<void>(`/v1/admin/settings/stock-locations/${id}`, { method: 'DELETE' }),
     onSuccess: refresh,
+  });
+}
+
+/** Store details and logo for invoices; any staff can read them. */
+export function useStoreInfo() {
+  return useQuery({
+    queryKey: ['store-info'],
+    queryFn: () => api<{ store: StoreSettings; logo: Media | null }>('/v1/admin/store-info'),
+    staleTime: 5 * 60_000,
   });
 }

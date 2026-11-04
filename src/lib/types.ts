@@ -373,3 +373,121 @@ export interface StockLocationRow {
   sortOrder: number;
   units: number;
 }
+
+// ---- Orders ----
+
+export type OrderStatus = 'pending' | 'confirmed' | 'packed' | 'shipped' | 'delivered' | 'cancelled' | 'returned';
+export type PaymentStatus = 'unpaid' | 'partial' | 'paid' | 'refunded';
+export type OrderChannel = 'website' | 'phone' | 'facebook' | 'whatsapp' | 'shop' | 'other';
+export type PaymentMethod = 'cod' | 'bkash' | 'nagad' | 'bank' | 'cash' | 'card' | 'online';
+export type OrderType = 'retail' | 'wholesale';
+
+export interface OrderListItem {
+  id: number;
+  number: number;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  channel: OrderChannel;
+  type: OrderType;
+  customerName: string;
+  phone: string;
+  districtName: string;
+  areaName: string | null;
+  items: number;
+  total: number;
+  paidAmount: number;
+  createdAt: string;
+}
+
+export interface OrderList {
+  items: OrderListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  /** Per status, plus "open" and "all". */
+  counts: Record<string, number>;
+}
+
+export interface OrderItem {
+  id: number;
+  productId: number | null;
+  variantId: number | null;
+  name: string;
+  variantLabel: string | null;
+  sku: string | null;
+  image: Media | null;
+  regularPrice: number;
+  unitPrice: number;
+  quantity: number;
+  lineTotal: number;
+  weightGrams: number | null;
+}
+
+export interface Order {
+  id: number;
+  number: number;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  channel: OrderChannel;
+  type: OrderType;
+  customerName: string;
+  phone: string;
+  email: string | null;
+  districtId: string;
+  districtName: string;
+  areaId: string | null;
+  areaName: string | null;
+  address: string;
+  deliveryZoneName: string | null;
+  locationId: number;
+  weightGrams: number;
+  subtotal: number;
+  discount: number;
+  deliveryFee: number;
+  total: number;
+  paidAmount: number;
+  advanceRequired: number;
+  courier: string | null;
+  trackingCode: string | null;
+  customerNote: string | null;
+  staffNote: string | null;
+  confirmedAt: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+  createdByName: string | null;
+  nextStatuses: OrderStatus[];
+  canEdit: boolean;
+  items: OrderItem[];
+  payments: { id: number; method: PaymentMethod; amount: number; reference: string | null; note: string | null; by: string | null; createdAt: string }[];
+  events: { id: number; type: string; message: string; by: string | null; createdAt: string }[];
+  customer: { id: number; type: 'retail' | 'business'; orders: number } | null;
+}
+
+/** A product variant found for adding to an order. */
+export interface OrderVariant {
+  variantId: number;
+  productId: number;
+  name: string;
+  variantLabel: string | null;
+  sku: string | null;
+  status: ProductStatus;
+  image: Media | null;
+  /** Retail price today (sale price while on sale). */
+  price: number;
+  regularPrice: number;
+  wholesalePrice: number | null;
+  weightGrams: number | null;
+  trackStock: boolean;
+  allowBackorder: boolean;
+  stock: number;
+}
+
+export interface CustomerLookup {
+  customer: { id: number; name: string; phone: string; email: string | null; type: 'retail' | 'business' } | null;
+  orders: number;
+  lastAddress: { districtId: string; areaId: string | null; address: string } | null;
+}
