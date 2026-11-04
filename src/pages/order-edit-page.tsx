@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { ArrowLeft, Minus, PackageSearch, Plus, Search, Trash2, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCustomerLookup, useOrder, useOrderDeliveryQuote, useSaveOrder, useVariantSearch } from '@/hooks/use-orders';
@@ -114,7 +114,9 @@ function OrderForm({ order }: { order: Order | null }) {
   const [channel, setChannel] = useState<OrderChannel>(order?.channel ?? 'phone');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(order?.paymentMethod ?? 'cod');
   const [lines, setLines] = useState<Line[]>(() => (order ? fromOrder(order) : []));
-  const [customer, setCustomer] = useState({ name: order?.customerName ?? '', phone: order?.phone ?? '', email: order?.email ?? '' });
+  // From a customer page: /orders/new?phone=01712345678
+  const [params] = useSearchParams();
+  const [customer, setCustomer] = useState({ name: order?.customerName ?? '', phone: order?.phone ?? params.get('phone') ?? '', email: order?.email ?? '' });
   const [place, setPlace] = useState({ districtId: order?.districtId ?? '', areaId: order?.areaId ?? '', address: order?.address ?? '' });
   const [discount, setDiscount] = useState(order ? String(order.discount || '') : '');
   // A saved order keeps its delivery charge until staff choose the zone charge again.
@@ -133,7 +135,7 @@ function OrderForm({ order }: { order: Order | null }) {
     if (found.lastAddress && !place.districtId && !place.address) {
       setPlace({ districtId: found.lastAddress.districtId, areaId: found.lastAddress.areaId ?? '', address: found.lastAddress.address });
     }
-    if (found.customer.type === 'business') setType('wholesale');
+    if (found.customer.wholesale) setType('wholesale');
   }, [lookup.data]);
 
   // Retail and wholesale have different prices.
@@ -339,7 +341,7 @@ function OrderForm({ order }: { order: Order | null }) {
                       <span className="inline-flex items-center gap-1 text-brand-700">
                         <UserCheck className="size-3.5" /> {lookup.data.customer.name} · {lookup.data.orders} earlier order
                         {lookup.data.orders === 1 ? '' : 's'}
-                        {lookup.data.customer.type === 'business' && ' · business'}
+                        {lookup.data.customer.wholesale && ' · business'}
                       </span>
                     ) : lookup.data ? (
                       'New customer'
@@ -368,9 +370,43 @@ function OrderForm({ order }: { order: Order | null }) {
                   />
                 </Field>
               </div>
+              {lookup.data?.customer?.isBlocked && (
+                <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                  <span className="font-medium">Blocked customer:</span> {lookup.data.customer.blockedReason}. Check before taking this order.
+                </p>
+              )}
+              {lookup.data?.customer?.termsNote && (
+                <p className="rounded-md bg-violet-50 px-3 py-2 text-sm text-violet-900">
+                  <span className="font-medium">Business terms:</span> {lookup.data.customer.termsNote}
+                </p>
+              )}
               <Field label="Email" htmlFor="order-email" error={fields['customer.email']} hint="Optional">
                 <Input id="order-email" type="email" value={customer.email} onChange={(e) => setCustomer({ ...customer, email: e.target.value })} />
               </Field>
+              {(lookup.data?.addresses.length ?? 0) > 1 && (
+                <Field label="Saved address" htmlFor="order-saved-address" hint="Fills in the address below">
+                  <Select
+                    id="order-saved-address"
+                    value={String(
+                      lookup.data!.addresses.find(
+                        (a) => a.districtId === place.districtId && (a.areaId ?? '') === place.areaId && a.address === place.address,
+                      )?.id ?? '',
+                    )}
+                    onChange={(e) => {
+                      const a = lookup.data!.addresses.find((x) => String(x.id) === e.target.value);
+                      if (a) setPlace({ districtId: a.districtId, areaId: a.areaId ?? '', address: a.address });
+                    }}
+                  >
+                    <option value="">A different address</option>
+                    {lookup.data!.addresses.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.label ? `${a.label}: ` : ''}
+                        {a.address}, {[a.areaName, a.districtName].filter(Boolean).join(', ')}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              )}
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="District" htmlFor="order-district" required error={fields.districtId}>
                   <Select
