@@ -78,7 +78,14 @@ export const NAV: NavGroup[] = [
   {
     label: 'Sales',
     items: [
-      { label: 'Orders', to: '/orders', icon: ShoppingCart, module: 'orders' },
+      {
+        label: 'Orders',
+        to: '/orders',
+        icon: ShoppingCart,
+        module: 'orders',
+        ready: true,
+        description: 'Take phone and Facebook orders, ship them and record payments',
+      },
       { label: 'Customers', to: '/customers', icon: Users, module: 'customers' },
       { label: 'Requests & Leads', to: '/leads', icon: Inbox, module: 'leads' },
     ],

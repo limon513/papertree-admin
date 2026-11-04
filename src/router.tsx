@@ -175,6 +175,59 @@ export const router = createBrowserRouter([
               };
             },
           },
+          {
+            path: 'orders',
+            lazy: async () => {
+              const { OrdersPage } = await import('@/pages/orders-page');
+              return {
+                Component: () => (
+                  <RequireModule module="orders">
+                    <OrdersPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
+            // Same page for a new order (/orders/new) and changing one (/orders/12/edit).
+            path: 'orders/new',
+            lazy: async () => {
+              const { OrderEditPage } = await import('@/pages/order-edit-page');
+              return {
+                Component: () => (
+                  <RequireModule module="orders">
+                    <OrderEditPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
+            path: 'orders/:id/edit',
+            lazy: async () => {
+              const { OrderEditPage } = await import('@/pages/order-edit-page');
+              return {
+                Component: () => (
+                  <RequireModule module="orders">
+                    <OrderEditPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
+            path: 'orders/:id',
+            lazy: async () => {
+              const { OrderPage } = await import('@/pages/order-page');
+              return {
+                Component: () => (
+                  <RequireModule module="orders">
+                    <OrderPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
           ...COMING_SOON.map((item) => ({
             path: item.to.slice(1),
             lazy: async () => {
@@ -190,6 +243,21 @@ export const router = createBrowserRouter([
           })),
           { path: '*', element: <NotFoundPage /> },
         ],
+      },
+      {
+        // Printable invoice: no menu or header around it.
+        path: 'orders/:id/invoice',
+        hydrateFallbackElement: <PageLoading />,
+        lazy: async () => {
+          const { OrderInvoicePage } = await import('@/pages/order-invoice-page');
+          return {
+            Component: () => (
+              <RequireModule module="orders">
+                <OrderInvoicePage />
+              </RequireModule>
+            ),
+          };
+        },
       },
     ],
   },
