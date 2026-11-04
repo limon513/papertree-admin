@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleSlash,
+  ExternalLink,
   Info,
   Plus,
   RefreshCw,
@@ -18,7 +19,7 @@ import { useCancelImport, useImport, useStartImport, type ImportRowFilter } from
 import { errorMessage } from '@/lib/api';
 import type { ImportDetail, ImportJob, ImportRow } from '@/lib/types';
 import { cn, formatDateTime, formatMoney } from '@/lib/utils';
-import { FORMAT_LABEL, ImportStatusBadge } from '@/components/imports/import-status';
+import { FORMAT_LABEL, ImportStatusBadge, jobTitle } from '@/components/imports/import-status';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -69,13 +70,24 @@ export function ImportDetailPage() {
           <ArrowLeft className="size-4" /> Product Imports
         </Link>
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="truncate text-2xl font-semibold tracking-tight text-zinc-900">{job.fileName}</h1>
+          <h1 className="truncate text-2xl font-semibold tracking-tight text-zinc-900">{jobTitle(job)}</h1>
           <ImportStatusBadge status={job.status} />
         </div>
         <p className="mt-1 text-sm text-zinc-500">
-          {FORMAT_LABEL[job.format]} · uploaded {formatDateTime(job.createdAt)}
+          {FORMAT_LABEL[job.format]} · {job.format === 'link' ? 'added' : 'uploaded'} {formatDateTime(job.createdAt)}
           {job.createdBy && ` by ${job.createdBy.name}`}
         </p>
+        {job.format === 'link' && (
+          <a
+            href={job.fileName}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 inline-flex max-w-full items-center gap-1 text-sm text-brand-700 hover:underline"
+          >
+            <span className="truncate">{job.fileName}</span>
+            <ExternalLink className="size-3.5 shrink-0" />
+          </a>
+        )}
       </div>
 
       {job.status === 'preview' ? (

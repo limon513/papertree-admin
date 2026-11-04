@@ -1,10 +1,11 @@
 import { useRef, useState, type DragEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Download, FileSpreadsheet, FileUp, History } from 'lucide-react';
+import { Download, FileSpreadsheet, FileUp, History, Link2 } from 'lucide-react';
 import { useImports, useUploadImport, type ImportOptions } from '@/hooks/use-imports';
 import { API_URL, ApiError, errorMessage } from '@/lib/api';
 import { cn, timeAgo } from '@/lib/utils';
-import { FORMAT_LABEL, ImportStatusBadge } from '@/components/imports/import-status';
+import { FORMAT_LABEL, ImportStatusBadge, jobTitle } from '@/components/imports/import-status';
+import { LinkImportCard } from '@/components/imports/link-import';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +21,7 @@ export function ImportsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Product Imports"
-        description="Add or update many products at once from a CSV file."
+        description="Copy a product from a link, or add and update many products at once from a file."
         actions={
           <Button variant="outline" asChild>
             <a href={`${API_URL}/v1/admin/imports/template.csv`} download>
@@ -29,6 +30,7 @@ export function ImportsPage() {
           </Button>
         }
       />
+      <LinkImportCard />
       <UploadCard />
       <HistoryCard />
     </div>
@@ -43,12 +45,14 @@ function UploadCard() {
   const [localError, setLocalError] = useState<string | null>(null);
   const [options, setOptions] = useState<ImportOptions>({ existing: 'skip', status: 'file', createMissing: true });
 
-  const start = (file: File | undefined) => {
-    if (!file) return;
+  const start = (list: FileList | null | undefined) => {
+    const files = Array.from(list ?? []);
+    if (!files.length) return;
     upload.reset();
-    if (file.size > MAX_MB * 1024 * 1024) return setLocalError(`The file is too big. The limit is ${MAX_MB} MB.`);
+    if (files.length > 2) return setLocalError('Choose one file, or the two Daraz exports together.');
+    if (files.some((f) => f.size > MAX_MB * 1024 * 1024)) return setLocalError(`The file is too big. The limit is ${MAX_MB} MB.`);
     setLocalError(null);
-    upload.mutate({ file, options }, { onSuccess: (job) => navigate(`/imports/${job.id}`) });
+    upload.mutate({ files, options }, { onSuccess: (job) => navigate(`/imports/${job.id}`) });
   };
 
   const error =
@@ -58,7 +62,7 @@ function UploadCard() {
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
     setDragging(false);
-    start(e.dataTransfer.files[0]);
+    start(e.dataTransfer.files);
   };
 
   return (
@@ -66,8 +70,8 @@ function UploadCard() {
       <CardHeader>
         <CardTitle>Import a file</CardTitle>
         <CardDescription>
-          Use our template, or the file from WooCommerce (Products → Export) to move products from the old website. Nothing is
-          imported until you have checked the file.
+          Use our template, the file from WooCommerce (Products → Export) to move products from the old website, or the Daraz
+          Seller Center exports. Nothing is imported until you have checked the file.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -75,11 +79,12 @@ function UploadCard() {
           <input
             ref={inputRef}
             type="file"
-            accept=".csv,text/csv"
+            accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            multiple
             className="sr-only"
             tabIndex={-1}
             onChange={(e) => {
-              start(e.target.files?.[0]);
+              start(e.target.files);
               e.target.value = '';
             }}
           />
@@ -109,9 +114,9 @@ function UploadCard() {
                 <span className="flex size-12 items-center justify-center rounded-full bg-brand-50 text-brand-700">
                   <FileUp className="size-6" />
                 </span>
-                <span className="text-sm font-medium text-zinc-800">Choose a CSV file or drop it here</span>
+                <span className="text-sm font-medium text-zinc-800">Choose a CSV or Excel file, or drop it here</span>
                 <span className="text-xs text-zinc-500">
-                  Up to {MAX_MB} MB and 5,000 products. From Excel: File → Save As → CSV.
+                  Up to {MAX_MB} MB and 5,000 products. For Daraz, choose the “basic” and “price &amp; stock” exports together.
                 </span>
               </>
             )}
@@ -203,9 +208,13 @@ function HistoryCard() {
                 <tr key={job.id} className="hover:bg-zinc-50/70">
                   <td className="px-5 py-3">
                     <Link to={`/imports/${job.id}`} className="flex items-center gap-3">
-                      <FileSpreadsheet className="size-5 shrink-0 text-zinc-400" />
+                      {job.format === 'link' ? (
+                        <Link2 className="size-5 shrink-0 text-zinc-400" />
+                      ) : (
+                        <FileSpreadsheet className="size-5 shrink-0 text-zinc-400" />
+                      )}
                       <span className="min-w-0">
-                        <span className="block truncate font-medium text-zinc-900 hover:text-brand-700">{job.fileName}</span>
+                        <span className="block truncate font-medium text-zinc-900 hover:text-brand-700">{jobTitle(job)}</span>
                         <span className="block text-xs text-zinc-500">
                           {FORMAT_LABEL[job.format]} · {job.total} product{job.total === 1 ? '' : 's'}
                         </span>

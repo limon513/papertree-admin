@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react';
-import type { ImportStatus } from '@/lib/types';
+import type { ImportJob, ImportStatus } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 
 const INFO: Record<ImportStatus, { label: string; variant: 'gray' | 'blue' | 'green' | 'red' | 'amber' }> = {
@@ -21,4 +21,19 @@ export function ImportStatusBadge({ status }: { status: ImportStatus }) {
   );
 }
 
-export const FORMAT_LABEL = { papertree: 'PaperTree template', woocommerce: 'WooCommerce export' } as const;
+export const FORMAT_LABEL: Record<ImportJob['format'], string> = {
+  papertree: 'PaperTree template',
+  woocommerce: 'WooCommerce export',
+  daraz: 'Daraz export',
+  link: 'Product link',
+};
+
+/** The file name, or the site for a product link ("daraz.com.bd"). */
+export function jobTitle(job: ImportJob) {
+  if (job.format !== 'link') return job.fileName;
+  try {
+    return new URL(job.fileName).hostname.replace(/^www\./, '');
+  } catch {
+    return job.fileName;
+  }
+}
