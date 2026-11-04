@@ -71,7 +71,7 @@ export const NAV: NavGroup[] = [
         icon: Download,
         module: 'imports',
         ready: true,
-        description: 'Add or update many products from a CSV file',
+        description: 'Copy products from links, or import CSV, Excel and Daraz files',
       },
     ],
   },
@@ -94,7 +94,14 @@ export const NAV: NavGroup[] = [
   {
     label: 'Admin',
     items: [
-      { label: 'Settings', to: '/settings', icon: Settings, module: 'settings' },
+      {
+        label: 'Settings',
+        to: '/settings',
+        icon: Settings,
+        module: 'settings',
+        ready: true,
+        description: 'Store details, delivery charges, payments and stock locations',
+      },
       {
         label: 'Staff',
         to: '/staff',

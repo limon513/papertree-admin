@@ -56,7 +56,8 @@ export function PictureField({
 
 const boxClasses = 'flex h-32 flex-col items-center justify-center gap-1.5 rounded-lg border text-center';
 
-function ImageBox({ label, image, onChange }: { label: string; image: Media | null; onChange: (image: Media | null) => void }) {
+/** Upload box for one image, with Replace and Remove. */
+export function ImageBox({ label, image, onChange }: { label: string; image: Media | null; onChange: (image: Media | null) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const upload = useUploadImage();
   const [dragging, setDragging] = useState(false);

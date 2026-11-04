@@ -296,3 +296,80 @@ export interface LinkRead {
   /** Our brand and categories with the same names. */
   match: { brandId: number | null; categoryIds: number[] };
 }
+
+// ---- Settings ----
+
+export interface StoreSettings {
+  name: string;
+  tagline: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  email: string | null;
+  address: string | null;
+  openingHours: string | null;
+  logoImageId: number | null;
+  facebook: string | null;
+  instagram: string | null;
+  youtube: string | null;
+  tiktok: string | null;
+}
+
+export type WholesaleDelivery = 'retail' | 'fixed' | 'free' | 'paid_on_delivery';
+
+export interface CheckoutSettings {
+  cod: { enabled: boolean; maxAmount: number | null };
+  wholesale: {
+    advancePercent: number;
+    minOrderAmount: number | null;
+    delivery: WholesaleDelivery;
+    deliveryFee: number | null;
+    terms: string | null;
+  };
+}
+
+export interface SettingsResponse {
+  store: StoreSettings;
+  checkout: CheckoutSettings;
+  logo: Media | null;
+}
+
+export interface DeliveryZone {
+  id: number;
+  name: string;
+  fee: number;
+  freeAbove: number | null;
+  includedKg: number | null;
+  extraPerKg: number | null;
+  deliveryTime: string | null;
+  districtIds: string[];
+  areaIds: string[];
+  isDefault: boolean;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface DeliveryQuote {
+  zone: { id: number; name: string; deliveryTime: string | null } | null;
+  fee: number | null;
+  baseFee: number;
+  weightFee: number;
+  free: boolean;
+  note: string | null;
+}
+
+export interface BdLocations {
+  divisions: { id: string; name: string }[];
+  districts: { id: string; name: string; divisionId: string }[];
+  /** Upazilas, plus Dhaka City thanas (city: true). */
+  areas: { id: string; name: string; districtId: string; city: boolean }[];
+}
+
+/** A stock location as managed in Settings: includes turned-off ones and the units kept there. */
+export interface StockLocationRow {
+  id: number;
+  name: string;
+  isDefault: boolean;
+  isActive: boolean;
+  sortOrder: number;
+  units: number;
+}

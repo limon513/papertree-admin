@@ -162,6 +162,19 @@ export const router = createBrowserRouter([
               };
             },
           },
+          {
+            path: 'settings',
+            lazy: async () => {
+              const { SettingsPage } = await import('@/pages/settings-page');
+              return {
+                Component: () => (
+                  <RequireModule module="settings">
+                    <SettingsPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
           ...COMING_SOON.map((item) => ({
             path: item.to.slice(1),
             lazy: async () => {
