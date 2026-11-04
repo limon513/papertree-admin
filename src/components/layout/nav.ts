@@ -65,7 +65,14 @@ export const NAV: NavGroup[] = [
         ready: true,
         description: 'Brands for products and the brand shop',
       },
-      { label: 'Product Imports', to: '/imports', icon: Download, module: 'imports' },
+      {
+        label: 'Product Imports',
+        to: '/imports',
+        icon: Download,
+        module: 'imports',
+        ready: true,
+        description: 'Add or update many products from a CSV file',
+      },
     ],
   },
   {

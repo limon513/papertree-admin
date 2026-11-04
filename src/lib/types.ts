@@ -213,3 +213,86 @@ export interface StockLocation {
   isDefault: boolean;
   isActive: boolean;
 }
+
+export type ImportStatus = 'preview' | 'queued' | 'running' | 'done' | 'failed' | 'cancelled';
+export type ImportAction = 'create' | 'update' | 'skip' | 'error';
+
+export interface ImportJob {
+  id: number;
+  status: ImportStatus;
+  fileName: string;
+  /** link: one product copied from a web page; fileName is the link. */
+  format: 'papertree' | 'woocommerce' | 'daraz' | 'link';
+  options: { existing: 'skip' | 'update'; status: 'file' | 'draft'; createMissing: boolean };
+  total: number;
+  processed: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  failed: number;
+  error: string | null;
+  createdBy: { id: number; name: string } | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  createdAt: string;
+  /** What the check decided, per product. */
+  preview: Record<ImportAction, number>;
+}
+
+export interface ImportRow {
+  id: number;
+  position: number;
+  lines: number[];
+  name: string;
+  action: ImportAction;
+  status: 'pending' | 'done' | 'skipped' | 'failed';
+  message: string | null;
+  productId: number | null;
+  variants: number;
+  images: number;
+  price: number | null;
+}
+
+export interface ImportDetail {
+  job: ImportJob;
+  rows: ImportRow[];
+  rowsTotal: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface LinkVariant {
+  values: string[];
+  price: number | null;
+  salePrice: number | null;
+  image: string | null;
+}
+
+/** A product read from another shop's page. */
+export interface LinkProduct {
+  url: string;
+  site: string;
+  source: 'woocommerce' | 'shopify' | 'daraz' | 'page';
+  name: string;
+  shortDescription: string | null;
+  /** Cleaned HTML, without pictures. */
+  description: string | null;
+  price: number | null;
+  salePrice: number | null;
+  currency: string | null;
+  brand: string | null;
+  /** Category names on the site, broadest first. */
+  categories: string[];
+  tags: string[];
+  specs: { name: string; value: string }[];
+  images: string[];
+  options: { name: string; values: string[] }[];
+  variants: LinkVariant[];
+  notes: string[];
+}
+
+export interface LinkRead {
+  product: LinkProduct;
+  /** Our brand and categories with the same names. */
+  match: { brandId: number | null; categoryIds: number[] };
+}
