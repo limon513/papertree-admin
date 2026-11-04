@@ -464,7 +464,15 @@ export interface Order {
   items: OrderItem[];
   payments: { id: number; method: PaymentMethod; amount: number; reference: string | null; note: string | null; by: string | null; createdAt: string }[];
   events: { id: number; type: string; message: string; by: string | null; createdAt: string }[];
-  customer: { id: number; type: 'retail' | 'business'; orders: number } | null;
+  customer: {
+    id: number;
+    type: 'retail' | 'business';
+    businessName: string | null;
+    isBlocked: boolean;
+    blockedReason: string | null;
+    termsNote: string | null;
+    orders: number;
+  } | null;
 }
 
 /** A product variant found for adding to an order. */
@@ -487,7 +495,90 @@ export interface OrderVariant {
 }
 
 export interface CustomerLookup {
-  customer: { id: number; name: string; phone: string; email: string | null; type: 'retail' | 'business' } | null;
+  customer: {
+    id: number;
+    name: string;
+    phone: string;
+    email: string | null;
+    type: 'retail' | 'business';
+    businessName: string | null;
+    /** Approved business: wholesale prices and its own terms. */
+    wholesale: boolean;
+    termsNote: string | null;
+    isBlocked: boolean;
+    blockedReason: string | null;
+  } | null;
   orders: number;
+  /** Saved addresses, default first. */
+  addresses: CustomerAddress[];
   lastAddress: { districtId: string; areaId: string | null; address: string } | null;
+}
+
+// ---- Customers ----
+
+export type BusinessStatus = 'pending' | 'approved' | 'rejected';
+
+/** A business's own wholesale terms. Empty fields use the shop terms. */
+export interface WholesaleTerms {
+  advancePercent: number | null;
+  minOrderAmount: number | null;
+  delivery: WholesaleDelivery | null;
+  deliveryFee: number | null;
+  note: string | null;
+}
+
+export interface CustomerListItem {
+  id: number;
+  name: string;
+  phone: string;
+  email: string | null;
+  type: 'retail' | 'business';
+  businessName: string | null;
+  businessStatus: BusinessStatus | null;
+  isBlocked: boolean;
+  createdAt: string;
+  orders: number;
+  spent: number;
+  due: number;
+  lastOrderAt: string | null;
+}
+
+export interface CustomerList {
+  items: CustomerListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  counts: Record<string, number>;
+}
+
+export interface CustomerAddress {
+  id: number;
+  label: string | null;
+  recipientName: string | null;
+  recipientPhone: string | null;
+  districtId: string;
+  districtName: string;
+  areaId: string | null;
+  areaName: string | null;
+  address: string;
+  isDefault: boolean;
+}
+
+export interface Customer {
+  id: number;
+  name: string;
+  phone: string;
+  email: string | null;
+  type: 'retail' | 'business';
+  businessName: string | null;
+  businessStatus: BusinessStatus | null;
+  tradeLicense: string | null;
+  wholesaleTerms: WholesaleTerms | null;
+  isBlocked: boolean;
+  blockedReason: string | null;
+  note: string | null;
+  createdAt: string;
+  stats: { orders: number; spent: number; due: number; averageOrder: number; cancelled: number; returned: number; lastOrderAt: string | null };
+  addresses: CustomerAddress[];
+  orders: { id: number; number: number; status: OrderStatus; paymentStatus: PaymentStatus; type: OrderType; total: number; paidAmount: number; createdAt: string }[];
 }

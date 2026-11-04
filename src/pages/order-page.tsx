@@ -135,7 +135,16 @@ export function OrderPage() {
                 <CardTitle>Customer</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <div className="font-medium text-zinc-900">{o.customerName}</div>
+                {o.customer ? (
+                  <Link to={`/customers/${o.customer.id}`} className="block font-medium text-zinc-900 hover:text-brand-700">
+                    {o.customerName}
+                    {o.customer.businessName && o.customer.businessName !== o.customerName && (
+                      <span className="font-normal text-zinc-500"> · {o.customer.businessName}</span>
+                    )}
+                  </Link>
+                ) : (
+                  <div className="font-medium text-zinc-900">{o.customerName}</div>
+                )}
                 <a href={`tel:${o.phone}`} className="flex items-center gap-1.5 text-brand-700 hover:underline">
                   <Phone className="size-3.5" /> {o.phone}
                 </a>
@@ -145,6 +154,16 @@ export function OrderPage() {
                     {o.customer.orders} order{o.customer.orders === 1 ? '' : 's'} in total
                     {o.customer.type === 'business' && ' · business customer'}
                   </div>
+                )}
+                {o.customer?.isBlocked && (
+                  <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-red-800">
+                    <span className="font-medium">Blocked customer:</span> {o.customer.blockedReason}
+                  </p>
+                )}
+                {o.customer?.termsNote && (
+                  <p className="rounded-md bg-violet-50 px-3 py-2 text-violet-900">
+                    <span className="font-medium">Business terms:</span> {o.customer.termsNote}
+                  </p>
                 )}
                 <div className="flex gap-1.5 pt-1 text-zinc-700">
                   <MapPin className="mt-0.5 size-3.5 shrink-0 text-zinc-400" />

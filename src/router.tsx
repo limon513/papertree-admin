@@ -228,6 +228,32 @@ export const router = createBrowserRouter([
               };
             },
           },
+          {
+            path: 'customers',
+            lazy: async () => {
+              const { CustomersPage } = await import('@/pages/customers-page');
+              return {
+                Component: () => (
+                  <RequireModule module="customers">
+                    <CustomersPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
+            path: 'customers/:id',
+            lazy: async () => {
+              const { CustomerPage } = await import('@/pages/customer-page');
+              return {
+                Component: () => (
+                  <RequireModule module="customers">
+                    <CustomerPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
           ...COMING_SOON.map((item) => ({
             path: item.to.slice(1),
             lazy: async () => {
