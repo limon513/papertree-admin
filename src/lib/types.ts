@@ -647,3 +647,28 @@ export interface Banner {
   sortOrder: number;
   state: BannerState;
 }
+
+export type IntegrationKey = 'email' | 'sms' | 'google' | 'payment';
+
+/** An outside service. Secrets are never sent back: only a hint like "re_…a3f9" (null: not saved). */
+export interface Integration {
+  key: IntegrationKey;
+  settings: Record<string, unknown>;
+  secrets: Record<string, string | null>;
+  state: 'ready' | 'test' | 'off' | 'incomplete';
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
+export interface MessageLogEntry {
+  id: number;
+  channel: 'email' | 'sms';
+  to: string;
+  subject: string | null;
+  body: string;
+  status: 'sent' | 'failed' | 'logged';
+  provider: string;
+  error: string | null;
+  purpose: string;
+  createdAt: string;
+}
