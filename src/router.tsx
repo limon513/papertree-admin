@@ -293,6 +293,19 @@ export const router = createBrowserRouter([
               };
             },
           },
+          {
+            path: 'content',
+            lazy: async () => {
+              const { ContentPage } = await import('@/pages/content-page');
+              return {
+                Component: () => (
+                  <RequireModule module="content">
+                    <ContentPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
           ...COMING_SOON.map((item) => ({
             path: item.to.slice(1),
             lazy: async () => {
