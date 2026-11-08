@@ -254,6 +254,45 @@ export const router = createBrowserRouter([
               };
             },
           },
+          {
+            path: 'search-words',
+            lazy: async () => {
+              const { SearchWordsPage } = await import('@/pages/search-words-page');
+              return {
+                Component: () => (
+                  <RequireModule module="products">
+                    <SearchWordsPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
+            path: 'reports',
+            lazy: async () => {
+              const { ReportsPage } = await import('@/pages/reports-page');
+              return {
+                Component: () => (
+                  <RequireModule module="reports">
+                    <ReportsPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
+            path: 'leads',
+            lazy: async () => {
+              const { LeadsPage } = await import('@/pages/leads-page');
+              return {
+                Component: () => (
+                  <RequireModule module="leads">
+                    <LeadsPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
           ...COMING_SOON.map((item) => ({
             path: item.to.slice(1),
             lazy: async () => {

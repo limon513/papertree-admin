@@ -582,3 +582,50 @@ export interface Customer {
   addresses: CustomerAddress[];
   orders: { id: number; number: number; status: OrderStatus; paymentStatus: PaymentStatus; type: OrderType; total: number; paidAmount: number; createdAt: string }[];
 }
+
+/** Words that mean the same to shoppers ("khata" = notebook). */
+export interface SynonymGroup {
+  id: number;
+  terms: string[];
+  updatedAt: string;
+}
+
+export interface SearchReportRow {
+  query: string;
+  searches: number;
+  lastAt: string;
+}
+
+export interface SearchReport {
+  days: number;
+  totals: { searches: number; noResults: number; corrected: number; different: number };
+  top: (SearchReportRow & { results: number })[];
+  noResults: SearchReportRow[];
+  corrected: (SearchReportRow & { correctedTo: string })[];
+}
+
+export type ProductRequestStatus = 'new' | 'done';
+
+/** "Request this product" from the website. */
+export interface ProductRequest {
+  id: number;
+  name: string;
+  phone: string;
+  details: string;
+  query: string | null;
+  status: ProductRequestStatus;
+  staffNote: string | null;
+  handledBy: string | null;
+  handledAt: string | null;
+  createdAt: string;
+  /** A customer with this phone number. */
+  customerId: number | null;
+}
+
+export interface ProductRequestList {
+  items: ProductRequest[];
+  total: number;
+  page: number;
+  pageSize: number;
+  counts: Record<ProductRequestStatus, number>;
+}
