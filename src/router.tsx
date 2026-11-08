@@ -306,6 +306,19 @@ export const router = createBrowserRouter([
               };
             },
           },
+          {
+            path: 'integrations',
+            lazy: async () => {
+              const { IntegrationsPage } = await import('@/pages/integrations-page');
+              return {
+                Component: () => (
+                  <RequireSuperAdmin>
+                    <IntegrationsPage />
+                  </RequireSuperAdmin>
+                ),
+              };
+            },
+          },
           ...COMING_SOON.map((item) => ({
             path: item.to.slice(1),
             lazy: async () => {
