@@ -7,6 +7,9 @@ import type { Media } from './types';
  */
 export const STORE_DOMAIN = 'papertree.com.bd';
 
+/** The website, for links that open it. Set VITE_STORE_URL for the demo site. */
+export const STORE_URL = (import.meta.env.VITE_STORE_URL ?? `https://${STORE_DOMAIN}`).replace(/\/$/, '');
+
 export const STORE_PATHS = {
   category: '/product-category/',
   brand: '/brand/',

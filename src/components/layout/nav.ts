@@ -14,6 +14,7 @@ import {
   Tags,
   UserCog,
   Users,
+  WholeWord,
 } from 'lucide-react';
 import type { ModuleKey } from '@/lib/types';
 
@@ -73,6 +74,14 @@ export const NAV: NavGroup[] = [
         ready: true,
         description: 'Copy products from links, or import CSV, Excel and Daraz files',
       },
+      {
+        label: 'Search words',
+        to: '/search-words',
+        icon: WholeWord,
+        module: 'products',
+        ready: true,
+        description: 'Words shoppers use for the same thing, like khata for notebook',
+      },
     ],
   },
   {
@@ -94,7 +103,14 @@ export const NAV: NavGroup[] = [
         ready: true,
         description: 'Customers, business accounts and their terms',
       },
-      { label: 'Requests & Leads', to: '/leads', icon: Inbox, module: 'leads' },
+      {
+        label: 'Requests & Leads',
+        to: '/leads',
+        icon: Inbox,
+        module: 'leads',
+        ready: true,
+        description: 'Products shoppers asked for when a search found nothing',
+      },
     ],
   },
   {
@@ -102,7 +118,14 @@ export const NAV: NavGroup[] = [
     items: [
       { label: 'Marketing', to: '/marketing', icon: Megaphone, module: 'marketing' },
       { label: 'Website Content', to: '/content', icon: LayoutTemplate, module: 'content' },
-      { label: 'Reports', to: '/reports', icon: BarChart3, module: 'reports' },
+      {
+        label: 'Reports',
+        to: '/reports',
+        icon: BarChart3,
+        module: 'reports',
+        ready: true,
+        description: 'What shoppers search for, and what they could not find',
+      },
     ],
   },
   {
