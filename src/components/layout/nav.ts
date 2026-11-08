@@ -117,7 +117,14 @@ export const NAV: NavGroup[] = [
     label: 'Store',
     items: [
       { label: 'Marketing', to: '/marketing', icon: Megaphone, module: 'marketing' },
-      { label: 'Website Content', to: '/content', icon: LayoutTemplate, module: 'content' },
+      {
+        label: 'Website Content',
+        to: '/content',
+        icon: LayoutTemplate,
+        module: 'content',
+        ready: true,
+        description: 'Home page banners: offers, campaigns, new arrivals',
+      },
       {
         label: 'Reports',
         to: '/reports',

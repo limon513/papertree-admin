@@ -629,3 +629,21 @@ export interface ProductRequestList {
   pageSize: number;
   counts: Record<ProductRequestStatus, number>;
 }
+
+export type BannerPlacement = 'hero' | 'tile';
+export type BannerState = 'live' | 'scheduled' | 'ended' | 'hidden' | 'no_picture';
+
+/** A home page banner. */
+export interface Banner {
+  id: number;
+  placement: BannerPlacement;
+  title: string;
+  image: Media | null;
+  mobileImage: Media | null;
+  linkUrl: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  state: BannerState;
+}
