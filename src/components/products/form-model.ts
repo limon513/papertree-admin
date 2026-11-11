@@ -1,5 +1,6 @@
 import type { ProductInput } from '@/hooks/use-products';
 import type { Media, Product, ProductStatus, StockLocation } from '@/lib/types';
+import { fromTierForms, toTierForms, type TierForm } from '@/components/settings/bulk-tiers';
 
 /**
  * The product form keeps numbers as text while the user types (so "" and "12." are allowed)
@@ -61,6 +62,9 @@ export interface ProductForm {
   variants: VariantForm[];
   seoTitle: string;
   seoDescription: string;
+  /** Bulk discount: the shop's steps, none, or its own. */
+  bulkMode: 'shop' | 'off' | 'own';
+  bulkTiers: TierForm[];
 }
 
 const text = (n: number | null | undefined) => (n === null || n === undefined ? '' : String(n));
@@ -113,6 +117,8 @@ export function fromProduct(p?: Product): ProductForm {
       variants: [emptyVariant()],
       seoTitle: '',
       seoDescription: '',
+      bulkMode: 'shop',
+      bulkTiers: [],
     };
   }
   return {
@@ -150,6 +156,8 @@ export function fromProduct(p?: Product): ProductForm {
     })),
     seoTitle: p.seoTitle ?? '',
     seoDescription: p.seoDescription ?? '',
+    bulkMode: p.bulkDiscount?.mode ?? 'shop',
+    bulkTiers: p.bulkDiscount?.mode === 'own' ? toTierForms(p.bulkDiscount.tiers) : [],
   };
 }
 
@@ -207,6 +215,7 @@ export function toInput(form: ProductForm, locations: StockLocation[]): ProductI
     })),
     seoTitle: form.seoTitle.trim() || null,
     seoDescription: form.seoDescription.trim() || null,
+    bulkDiscount: form.bulkMode === 'off' ? { mode: 'off' } : form.bulkMode === 'own' ? { mode: 'own', tiers: fromTierForms(form.bulkTiers) } : null,
   };
 }
 

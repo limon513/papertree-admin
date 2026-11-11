@@ -174,6 +174,7 @@ export interface Product {
   variants: ProductVariant[];
   seoTitle: string | null;
   seoDescription: string | null;
+  bulkDiscount: ProductBulk;
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -325,7 +326,17 @@ export interface CheckoutSettings {
     deliveryFee: number | null;
     terms: string | null;
   };
+  bulk: { enabled: boolean; tiers: BulkTier[]; onSale: boolean };
 }
+
+/** Bulk discount step: from this many pieces, this percent off. */
+export interface BulkTier {
+  minQuantity: number;
+  percent: number;
+}
+
+/** A product's bulk rule. null: the shop's steps. */
+export type ProductBulk = { mode: 'off' } | { mode: 'own'; tiers: BulkTier[] } | null;
 
 export interface SettingsResponse {
   store: StoreSettings;
@@ -418,9 +429,13 @@ export interface OrderItem {
   sku: string | null;
   image: Media | null;
   regularPrice: number;
+  /** After any bulk discount. */
   unitPrice: number;
   quantity: number;
+  /** After any bulk discount. */
   lineTotal: number;
+  bulkPercent: number | null;
+  bulkDiscount: number;
   weightGrams: number | null;
 }
 
@@ -445,6 +460,8 @@ export interface Order {
   weightGrams: number;
   subtotal: number;
   discount: number;
+  /** Saved by bulk discounts (already in the item prices and the subtotal). */
+  bulkDiscount: number;
   deliveryFee: number;
   total: number;
   paidAmount: number;

@@ -47,6 +47,8 @@ import { Field } from '@/components/ui/field';
 import { Input, Select, Textarea } from '@/components/ui/input';
 import { ErrorAlert, LoadError, Skeleton } from '@/components/ui/misc';
 import { TagsInput } from '@/components/ui/tags-input';
+import { BulkTiersEditor, describeTiers, toTierForms } from '@/components/settings/bulk-tiers';
+import { useSettings } from '@/hooks/use-settings';
 
 export function ProductEditPage() {
   const { id } = useParams();
@@ -141,6 +143,20 @@ function ProductEditor({ product }: { product: Product | undefined }) {
     setForm((f) => ({ ...f, options, variants: syncVariants(options, f.variants) }));
 
   const fields = save.error instanceof ApiError ? save.error.fields : {};
+  // The shop's steps, for the hint (staff without Settings access just do not see them).
+  const shopBulk = useSettings().data?.checkout.bulk;
+  const bulkHint =
+    form.bulkMode === 'off'
+      ? 'Always the normal price, however many are bought.'
+      : form.bulkMode === 'own'
+        ? "These steps instead of the shop's."
+        : shopBulk
+          ? !shopBulk.enabled
+            ? 'Bulk discounts are switched off (Settings > Bulk discounts).'
+            : shopBulk.tiers.length
+              ? `Now: ${describeTiers(shopBulk.tiers)}`
+              : 'The shop has no steps yet (Settings > Bulk discounts).'
+          : undefined;
   const errorCount = Object.keys(fields).length;
   const generalError = save.isError && errorCount === 0 ? errorMessage(save.error) : null;
 
@@ -402,6 +418,32 @@ function ProductEditor({ product }: { product: Product | undefined }) {
             <Field label="Tags" htmlFor="product-tags" error={fields.tags} hint="Words that help search, e.g. school, office.">
               <TagsInput id="product-tags" value={form.tags} onChange={(tags) => set({ tags })} placeholder="Add a tag" />
             </Field>
+          </Section>
+
+          <Section title="Bulk discount" description="Buy more, pay less per piece (retail). Shown in the cart, not on the product page.">
+            <Field label="Discount" htmlFor="product-bulk" hint={bulkHint}>
+              <Select
+                id="product-bulk"
+                value={form.bulkMode}
+                onChange={(e) => {
+                  const bulkMode = e.target.value as typeof form.bulkMode;
+                  // Own steps start from the shop's, to change from there.
+                  set({ bulkMode, bulkTiers: bulkMode === 'own' && form.bulkTiers.length === 0 ? toTierForms(shopBulk?.tiers ?? []) : form.bulkTiers });
+                }}
+              >
+                <option value="shop">The shop's steps</option>
+                <option value="off">No bulk discount</option>
+                <option value="own">Its own steps</option>
+              </Select>
+            </Field>
+            {form.bulkMode === 'own' && (
+              <BulkTiersEditor
+                idPrefix="product-bulk"
+                value={form.bulkTiers}
+                onChange={(bulkTiers) => set({ bulkTiers })}
+                errorAt={(i, f) => fields[`bulkDiscount.tiers.${i}.${f}`] ?? (i === 0 ? fields['bulkDiscount.tiers'] ?? fields.bulkDiscount : undefined)}
+              />
+            )}
           </Section>
         </div>
       </div>

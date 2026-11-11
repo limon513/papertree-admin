@@ -110,6 +110,7 @@ export function OrderPage() {
                   <div className="text-right text-sm whitespace-nowrap text-zinc-600 tabular-nums">
                     {i.quantity} × {formatMoney(i.unitPrice)}
                     {i.unitPrice < i.regularPrice && <div className="text-xs text-zinc-400 line-through">{formatMoney(i.regularPrice)}</div>}
+                    {i.bulkPercent ? <div className="text-xs text-brand-700">Bulk {i.bulkPercent}%: −{formatMoney(i.bulkDiscount)}</div> : null}
                   </div>
                   <div className="w-24 text-right font-medium text-zinc-900 tabular-nums">{formatMoney(i.lineTotal)}</div>
                 </li>
@@ -117,6 +118,12 @@ export function OrderPage() {
             </ul>
             <dl className="space-y-1.5 border-t border-zinc-200 bg-zinc-50/50 px-5 py-4 text-sm">
               <Row label="Subtotal" value={formatMoney(o.subtotal)} />
+              {o.bulkDiscount > 0 && (
+                <div className="flex justify-between text-xs text-brand-700">
+                  <dt>Bulk discounts (in the subtotal)</dt>
+                  <dd className="tabular-nums">−{formatMoney(o.bulkDiscount)}</dd>
+                </div>
+              )}
               {o.discount > 0 && <Row label="Discount" value={`− ${formatMoney(o.discount)}`} />}
               <Row
                 label={`Delivery${o.deliveryZoneName ? ` (${o.deliveryZoneName}${o.weightGrams ? `, ${(o.weightGrams / 1000).toFixed(2)} kg` : ''})` : ''}`}
