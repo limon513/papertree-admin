@@ -98,7 +98,9 @@ export function OrderInvoicePage() {
                 <td className="py-2 pr-2 text-zinc-500">{n + 1}</td>
                 <td className="py-2 pr-2">
                   <div className="font-medium text-zinc-900">{i.name}</div>
-                  <div className="text-xs text-zinc-500">{[i.variantLabel, i.sku].filter(Boolean).join(' · ')}</div>
+                  <div className="text-xs text-zinc-500">
+                    {[i.variantLabel, i.sku, i.bulkPercent ? `${i.bulkPercent}% bulk discount` : null].filter(Boolean).join(' · ')}
+                  </div>
                 </td>
                 <td className="py-2 pr-2 text-right tabular-nums">{formatMoney(i.unitPrice)}</td>
                 <td className="py-2 pr-2 text-right tabular-nums">{i.quantity}</td>
@@ -111,6 +113,7 @@ export function OrderInvoicePage() {
         <div className="mt-4 flex justify-end">
           <dl className="w-64 space-y-1">
             <Line label="Subtotal" value={formatMoney(o.subtotal)} />
+            {o.bulkDiscount > 0 && <p className="text-right text-xs text-zinc-500">You saved {formatMoney(o.bulkDiscount)} with bulk discounts</p>}
             {o.discount > 0 && <Line label="Discount" value={`− ${formatMoney(o.discount)}`} />}
             <Line label="Delivery" value={o.deliveryFee === 0 ? 'Free' : formatMoney(o.deliveryFee)} />
             <div className="flex justify-between border-t border-zinc-300 pt-1 text-base font-semibold text-zinc-900">

@@ -44,6 +44,8 @@ export function PaymentsSection({ data }: { data: SettingsResponse }) {
           deliveryFee: form.delivery === 'fixed' ? toNumber(form.deliveryFee) : null,
           terms: form.terms.trim() || null,
         },
+        // Saved with the rest of the checkout setting: kept as it is.
+        bulk: data.checkout.bulk,
       },
       {
         onSuccess: (saved) => {

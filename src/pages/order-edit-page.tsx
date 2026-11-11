@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { ArrowLeft, Minus, PackageSearch, Plus, Search, Trash2, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { useCustomerLookup, useOrder, useOrderDeliveryQuote, useSaveOrder, useVariantSearch } from '@/hooks/use-orders';
+import { useCustomerLookup, useOrder, useOrderDeliveryQuote, useOrderPrices, useSaveOrder, useVariantSearch } from '@/hooks/use-orders';
 import { useBdLocations } from '@/hooks/use-settings';
 import { ApiError, errorMessage } from '@/lib/api';
 import { imageUrl } from '@/lib/store';
@@ -27,6 +27,8 @@ interface Line {
   price: string;
   /** Typed by staff (or kept from the saved order): not replaced when the order type changes. */
   customPrice: boolean;
+  /** Bulk discount on top of the price (retail): yes for the product price, no once staff type a price. */
+  bulk: boolean;
   retailPrice: number | null;
   wholesalePrice: number | null;
   weightGrams: number | null;
@@ -51,6 +53,7 @@ function fromVariant(v: OrderVariant, type: OrderType): Line {
     quantity: '1',
     price: '',
     customPrice: false,
+    bulk: true,
     retailPrice: v.price,
     wholesalePrice: v.wholesalePrice,
     weightGrams: v.weightGrams,
@@ -71,9 +74,11 @@ function fromOrder(order: Order): Line[] {
       sku: i.sku,
       image: i.image,
       quantity: String(i.quantity),
-      // Keep the price the customer agreed to.
-      price: String(i.unitPrice),
+      // Keep the price the customer agreed to. With a bulk discount: the price before it, and the
+      // discount is worked out again (so it follows a changed quantity).
+      price: String(i.bulkPercent ? Math.round(((i.lineTotal + i.bulkDiscount) / i.quantity) * 100) / 100 : i.unitPrice),
       customPrice: true,
+      bulk: i.bulkPercent !== null && i.bulkPercent !== undefined,
       retailPrice: null,
       wholesalePrice: null,
       weightGrams: i.weightGrams,
@@ -144,7 +149,23 @@ function OrderForm({ order }: { order: Order | null }) {
     setLines((ls) => ls.map((l) => (l.customPrice ? l : { ...l, price: String(listPrice(l, next) ?? l.price) })));
   };
 
-  const subtotal = lines.reduce((sum, l) => sum + (num(l.price) || 0) * (num(l.quantity) || 0), 0);
+  // What is sent to the server: to save, and to get the prices shown here.
+  const itemsInput = lines.map((l) => ({
+    variantId: l.variantId,
+    quantity: num(l.quantity),
+    ...(l.customPrice || l.retailPrice === null ? { unitPrice: num(l.price) } : {}),
+    bulk: l.bulk,
+  }));
+  const priceable = itemsInput.filter((i) => Number.isInteger(i.quantity) && i.quantity > 0 && (i.unitPrice === undefined || (Number.isFinite(i.unitPrice) && i.unitPrice >= 0)));
+  const prices = useOrderPrices({ type, items: priceable });
+  // The server's numbers, once they are for exactly these lines (else the plain sum, for a moment).
+  const fresh =
+    prices.data && !prices.isPlaceholderData && prices.data.lines.length === priceable.length && priceable.every((p) => prices.data!.lines.some((l) => l.variantId === p.variantId && l.quantity === p.quantity))
+      ? prices.data
+      : null;
+  const priceOf = (variantId: number) => fresh?.lines.find((l) => l.variantId === variantId);
+  const plainSubtotal = lines.reduce((sum, l) => sum + (num(l.price) || 0) * (num(l.quantity) || 0), 0);
+  const subtotal = fresh?.subtotal ?? plainSubtotal;
   const weightKg = lines.reduce((sum, l) => sum + (l.weightGrams ?? 0) * (num(l.quantity) || 0), 0) / 1000;
   const quote = useOrderDeliveryQuote({
     districtId: place.districtId,
@@ -196,6 +217,7 @@ function OrderForm({ order }: { order: Order | null }) {
             variantId: l.variantId,
             quantity: num(l.quantity),
             ...(l.customPrice || l.retailPrice === null ? { unitPrice: num(l.price) } : {}),
+            bulk: l.bulk,
           })),
           discount: discountValue,
           deliveryFee: deliveryOverride !== null ? num(deliveryOverride) : null,
@@ -294,20 +316,32 @@ function OrderForm({ order }: { order: Order | null }) {
                             aria-label={`Price of ${l.name}`}
                             inputMode="decimal"
                             value={l.price}
-                            onChange={(e) => updateLine(i, { price: e.target.value, customPrice: true })}
+                            onChange={(e) => updateLine(i, { price: e.target.value, customPrice: true, bulk: false })}
                             className="h-8"
                           />
                           {l.customPrice && list !== null && num(l.price) !== list && (
                             <button
                               type="button"
                               className="mt-0.5 text-xs text-brand-700 hover:underline"
-                              onClick={() => updateLine(i, { price: String(list), customPrice: false })}
+                              onClick={() => updateLine(i, { price: String(list), customPrice: false, bulk: true })}
                             >
                               Use {formatMoney(list)}
                             </button>
                           )}
                         </div>
-                        <div className="w-24 text-right font-medium text-zinc-900 tabular-nums">{formatMoney((num(l.price) || 0) * qty)}</div>
+                        <div className="w-28 text-right tabular-nums">
+                          <div className="font-medium text-zinc-900">{formatMoney(priceOf(l.variantId)?.lineTotal ?? (num(l.price) || 0) * qty)}</div>
+                          {priceOf(l.variantId)?.bulkPercent ? (
+                            <div className="text-xs text-brand-700">
+                              Bulk {priceOf(l.variantId)!.bulkPercent}%: −{formatMoney(priceOf(l.variantId)!.bulkDiscount)}
+                            </div>
+                          ) : null}
+                          {priceOf(l.variantId)?.bulkNext && (
+                            <div className="text-xs text-zinc-500">
+                              +{priceOf(l.variantId)!.bulkNext!.more} more: {priceOf(l.variantId)!.bulkNext!.percent}% off
+                            </div>
+                          )}
+                        </div>
                         <Button
                           type="button"
                           variant="ghost"
@@ -490,8 +524,21 @@ function OrderForm({ order }: { order: Order | null }) {
               <dl className="space-y-2 border-t border-zinc-200 pt-4 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-zinc-600">Subtotal</dt>
-                  <dd className="tabular-nums">{formatMoney(subtotal)}</dd>
+                  <dd className={cn('tabular-nums', !fresh && lines.length > 0 && 'text-zinc-400')}>{formatMoney(subtotal)}</dd>
                 </div>
+                {fresh && fresh.bulkDiscount > 0 && (
+                  <div className="flex justify-between text-xs text-brand-700">
+                    <dt>Bulk discounts (in the subtotal)</dt>
+                    <dd className="tabular-nums">−{formatMoney(fresh.bulkDiscount)}</dd>
+                  </div>
+                )}
+                {order && fresh && Math.abs(fresh.subtotal - order.subtotal) > 0.009 && (
+                  // The customer was told the saved amount: say so before it changes.
+                  <p className="rounded-md bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800" role="alert">
+                    The subtotal was {formatMoney(order.subtotal)} when the order was placed. It changes to {formatMoney(fresh.subtotal)} when you save
+                    (different items or quantities, or the bulk discount changed). Tell the customer.
+                  </p>
+                )}
                 <div className="flex items-center justify-between gap-3">
                   <dt className="text-zinc-600">Discount</dt>
                   <dd className="w-28">

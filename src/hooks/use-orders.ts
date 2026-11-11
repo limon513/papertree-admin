@@ -134,6 +134,37 @@ export function useCustomerLookup(phone: string) {
   });
 }
 
+export interface OrderPriceInput {
+  type: 'retail' | 'wholesale';
+  items: { variantId: number; quantity: number; unitPrice?: number; bulk?: boolean }[];
+}
+
+export interface OrderPrices {
+  lines: {
+    variantId: number;
+    quantity: number;
+    basePrice: number;
+    unitPrice: number;
+    lineTotal: number;
+    bulkPercent: number | null;
+    bulkDiscount: number;
+    bulkNext: { more: number; percent: number } | null;
+  }[];
+  subtotal: number;
+  bulkDiscount: number;
+}
+
+/** The order's prices from the server, as the order will be saved (bulk discounts included). */
+export function useOrderPrices(input: OrderPriceInput) {
+  return useQuery({
+    queryKey: [...ORDERS_KEY, 'prices', input],
+    queryFn: () => api<OrderPrices>('/v1/admin/orders/price', { method: 'POST', body: input }),
+    enabled: input.items.length > 0,
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  });
+}
+
 export interface OrderQuoteInput {
   districtId: string;
   areaId: string | null;

@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { ListResponse, Product, ProductList, ProductStatus, StockLocation } from '@/lib/types';
+import type { ListResponse, Product, ProductList, ProductStatus, StockLocation, ProductBulk } from '@/lib/types';
 
 const PRODUCTS_KEY = ['products'] as const;
 
@@ -50,6 +50,7 @@ export interface ProductInput {
   }[];
   seoTitle: string | null;
   seoDescription: string | null;
+  bulkDiscount: ProductBulk;
 }
 
 export function useProducts(filters: ProductFilters) {
