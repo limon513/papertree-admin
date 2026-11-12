@@ -307,6 +307,19 @@ export const router = createBrowserRouter([
             },
           },
           {
+            path: 'seo',
+            lazy: async () => {
+              const { SeoPage } = await import('@/pages/seo-page');
+              return {
+                Component: () => (
+                  <RequireModule module="content">
+                    <SeoPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
             path: 'content',
             lazy: async () => {
               const { ContentPage } = await import('@/pages/content-page');
@@ -315,6 +328,19 @@ export const router = createBrowserRouter([
                   <RequireModule module="content">
                     <ContentPage />
                   </RequireModule>
+                ),
+              };
+            },
+          },
+          {
+            path: 'migration',
+            lazy: async () => {
+              const { MigrationPage } = await import('@/pages/migration-page');
+              return {
+                Component: () => (
+                  <RequireSuperAdmin>
+                    <MigrationPage />
+                  </RequireSuperAdmin>
                 ),
               };
             },
