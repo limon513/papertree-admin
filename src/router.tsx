@@ -294,6 +294,19 @@ export const router = createBrowserRouter([
             },
           },
           {
+            path: 'marketing',
+            lazy: async () => {
+              const { MarketingPage } = await import('@/pages/marketing-page');
+              return {
+                Component: () => (
+                  <RequireModule module="marketing">
+                    <MarketingPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
             path: 'content',
             lazy: async () => {
               const { ContentPage } = await import('@/pages/content-page');

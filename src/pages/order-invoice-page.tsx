@@ -115,6 +115,7 @@ export function OrderInvoicePage() {
             <Line label="Subtotal" value={formatMoney(o.subtotal)} />
             {o.bulkDiscount > 0 && <p className="text-right text-xs text-zinc-500">You saved {formatMoney(o.bulkDiscount)} with bulk discounts</p>}
             {o.discount > 0 && <Line label="Discount" value={`− ${formatMoney(o.discount)}`} />}
+            {o.couponDiscount > 0 && <Line label={`Coupon ${o.couponCode}`} value={`− ${formatMoney(o.couponDiscount)}`} />}
             <Line label="Delivery" value={o.deliveryFee === 0 ? 'Free' : formatMoney(o.deliveryFee)} />
             <div className="flex justify-between border-t border-zinc-300 pt-1 text-base font-semibold text-zinc-900">
               <dt>Total</dt>
