@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  FileText,
   Route,
   Truck,
   BarChart3,
@@ -127,6 +128,14 @@ export const NAV: NavGroup[] = [
         module: 'content',
         ready: true,
         description: 'Home page banners: offers, campaigns, new arrivals',
+      },
+      {
+        label: 'Pages',
+        to: '/pages',
+        icon: FileText,
+        module: 'content',
+        ready: true,
+        description: 'About us, Contact, Terms, Refund and Privacy',
       },
       {
         label: 'Redirects & 404s',
