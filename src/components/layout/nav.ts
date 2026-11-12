@@ -1,5 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  Route,
+  Truck,
   BarChart3,
   Download,
   FolderTree,
@@ -127,6 +129,14 @@ export const NAV: NavGroup[] = [
         description: 'Home page banners: offers, campaigns, new arrivals',
       },
       {
+        label: 'Redirects & 404s',
+        to: '/seo',
+        icon: Route,
+        module: 'content',
+        ready: true,
+        description: 'Keep old links and Google rankings working',
+      },
+      {
         label: 'Reports',
         to: '/reports',
         icon: BarChart3,
@@ -170,6 +180,14 @@ export const NAV: NavGroup[] = [
         superAdminOnly: true,
         ready: true,
         description: 'Email, SMS, Google sign-in and online payment keys',
+      },
+      {
+        label: 'Move from old site',
+        to: '/migration',
+        icon: Truck,
+        superAdminOnly: true,
+        ready: true,
+        description: 'Copy the old shop with the same web addresses',
       },
     ],
   },
