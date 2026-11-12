@@ -462,6 +462,9 @@ export interface Order {
   discount: number;
   /** Saved by bulk discounts (already in the item prices and the subtotal). */
   bulkDiscount: number;
+  /** The coupon used and what it took off (items, and delivery for free-delivery coupons). */
+  couponCode: string | null;
+  couponDiscount: number;
   deliveryFee: number;
   total: number;
   paidAmount: number;
@@ -688,4 +691,43 @@ export interface MessageLogEntry {
   error: string | null;
   purpose: string;
   createdAt: string;
+}
+
+// ---- Coupons ----
+
+export type CouponType = 'percent' | 'fixed' | 'free_delivery';
+/** live: works now; scheduled: starts later; ended: past its end date or fully used; off: switched off. */
+export type CouponState = 'live' | 'scheduled' | 'ended' | 'off';
+
+export interface Coupon {
+  id: number;
+  code: string;
+  note: string | null;
+  type: CouponType;
+  value: number | null;
+  maxDiscount: number | null;
+  minOrder: number | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  usageLimit: number | null;
+  perCustomerLimit: number | null;
+  newCustomersOnly: boolean;
+  phone: string | null;
+  items: { productIds: number[]; categoryIds: number[]; brandIds: number[] };
+  onSaleItems: boolean;
+  withBulk: boolean;
+  isActive: boolean;
+  /** Orders placed with it (cancelled ones too). */
+  usedCount: number;
+  createdAt: string;
+  updatedAt: string;
+  /** "10% off (up to ৳200)". */
+  label: string;
+  state: CouponState;
+  /** given: taka off on orders not cancelled or returned; sales: their totals. */
+  stats: { orders: number; given: number; sales: number };
+}
+
+export interface CouponDetail extends Coupon {
+  recentOrders: { id: number; number: number; customerName: string; phone: string; status: OrderStatus; total: number; couponDiscount: number; createdAt: string }[];
 }

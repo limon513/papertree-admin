@@ -125,6 +125,7 @@ export function OrderPage() {
                 </div>
               )}
               {o.discount > 0 && <Row label="Discount" value={`− ${formatMoney(o.discount)}`} />}
+              {o.couponDiscount > 0 && <Row label={`Coupon ${o.couponCode}`} value={`− ${formatMoney(o.couponDiscount)}`} />}
               <Row
                 label={`Delivery${o.deliveryZoneName ? ` (${o.deliveryZoneName}${o.weightGrams ? `, ${(o.weightGrams / 1000).toFixed(2)} kg` : ''})` : ''}`}
                 value={o.deliveryFee === 0 ? 'Free' : formatMoney(o.deliveryFee)}

@@ -58,6 +58,8 @@ export interface OrderInput {
   deliveryFee: number | null;
   customerNote: string | null;
   staffNote: string | null;
+  /** A coupon code (retail). The server checks it and works it out. */
+  couponCode?: string | null;
 }
 
 /** After any change: the order itself, the lists, and product stock. */
@@ -137,6 +139,11 @@ export function useCustomerLookup(phone: string) {
 export interface OrderPriceInput {
   type: 'retail' | 'wholesale';
   items: { variantId: number; quantity: number; unitPrice?: number; bulk?: boolean }[];
+  /** With a coupon: the order's phone, the delivery charge and (editing) the order. */
+  couponCode?: string | null;
+  phone?: string | null;
+  deliveryFee?: number | null;
+  orderId?: number | null;
 }
 
 export interface OrderPrices {
@@ -152,14 +159,16 @@ export interface OrderPrices {
   }[];
   subtotal: number;
   bulkDiscount: number;
+  /** ok: what it takes off; otherwise why not. kept: the order's own coupon (no new use). */
+  coupon: { code: string; ok: boolean; message: string | null; itemsOff: number; deliveryOff: number; kept: boolean } | null;
 }
 
 /** The order's prices from the server, as the order will be saved (bulk discounts included). */
-export function useOrderPrices(input: OrderPriceInput) {
+export function useOrderPrices(input: OrderPriceInput, enabled = true) {
   return useQuery({
     queryKey: [...ORDERS_KEY, 'prices', input],
     queryFn: () => api<OrderPrices>('/v1/admin/orders/price', { method: 'POST', body: input }),
-    enabled: input.items.length > 0,
+    enabled: enabled && input.items.length > 0,
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   });

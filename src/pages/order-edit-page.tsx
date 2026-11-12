@@ -124,6 +124,7 @@ function OrderForm({ order }: { order: Order | null }) {
   const [customer, setCustomer] = useState({ name: order?.customerName ?? '', phone: order?.phone ?? params.get('phone') ?? '', email: order?.email ?? '' });
   const [place, setPlace] = useState({ districtId: order?.districtId ?? '', areaId: order?.areaId ?? '', address: order?.address ?? '' });
   const [discount, setDiscount] = useState(order ? String(order.discount || '') : '');
+  const [couponCode, setCouponCode] = useState(order?.couponCode ?? '');
   // A saved order keeps its delivery charge until staff choose the zone charge again.
   const [deliveryOverride, setDeliveryOverride] = useState<string | null>(order ? String(order.deliveryFee) : null);
   const [customerNote, setCustomerNote] = useState(order?.customerNote ?? '');
@@ -176,7 +177,16 @@ function OrderForm({ order }: { order: Order | null }) {
   });
   const deliveryFee = deliveryOverride !== null ? num(deliveryOverride) || 0 : (quote.data?.fee ?? 0);
   const discountValue = num(discount) || 0;
-  const total = Math.max(0, subtotal - discountValue) + deliveryFee;
+  // The coupon, checked by the server for this phone and delivery charge (as saving will).
+  const code = couponCode.trim();
+  const couponCheck = useOrderPrices(
+    { type, items: priceable, couponCode: code || null, phone: customer.phone.trim() || null, deliveryFee, orderId: order?.id ?? null },
+    code.length > 0,
+  );
+  const coupon = code && couponCheck.data && !couponCheck.isPlaceholderData ? couponCheck.data.coupon : null;
+  const couponItemsOff = coupon?.ok ? coupon.itemsOff : 0;
+  const couponDeliveryOff = coupon?.ok ? coupon.deliveryOff : 0;
+  const total = Math.max(0, subtotal - discountValue - couponItemsOff) + Math.max(0, deliveryFee - couponDeliveryOff);
 
   const areas = useMemo(
     () =>
@@ -220,6 +230,7 @@ function OrderForm({ order }: { order: Order | null }) {
             bulk: l.bulk,
           })),
           discount: discountValue,
+          couponCode: code || null,
           deliveryFee: deliveryOverride !== null ? num(deliveryOverride) : null,
           customerNote: customerNote.trim() || null,
           staffNote: staffNote.trim() || null,
@@ -532,11 +543,11 @@ function OrderForm({ order }: { order: Order | null }) {
                     <dd className="tabular-nums">−{formatMoney(fresh.bulkDiscount)}</dd>
                   </div>
                 )}
-                {order && fresh && Math.abs(fresh.subtotal - order.subtotal) > 0.009 && (
-                  // The customer was told the saved amount: say so before it changes.
+                {order && fresh && (!code || coupon !== null) && !quote.isFetching && Math.abs(total - order.total) > 0.009 && (
+                  // The customer was told the saved total: say so before it changes (items, bulk discount, coupon or delivery).
                   <p className="rounded-md bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800" role="alert">
-                    The subtotal was {formatMoney(order.subtotal)} when the order was placed. It changes to {formatMoney(fresh.subtotal)} when you save
-                    (different items or quantities, or the bulk discount changed). Tell the customer.
+                    The total was {formatMoney(order.total)} when the order was placed. It changes to {formatMoney(total)} when you save (different items or
+                    quantities, a changed bulk discount or coupon, or the delivery charge). Tell the customer.
                   </p>
                 )}
                 <div className="flex items-center justify-between gap-3">
@@ -554,6 +565,23 @@ function OrderForm({ order }: { order: Order | null }) {
                   </dd>
                 </div>
                 {fields.discount && <p className="text-right text-xs text-red-600">{fields.discount}</p>}
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-zinc-600">Coupon</dt>
+                  <dd className="flex items-center gap-2">
+                    {coupon?.ok && <span className="text-xs text-brand-700 tabular-nums">−{formatMoney(coupon.itemsOff + coupon.deliveryOff)}</span>}
+                    <Input
+                      aria-label="Coupon code"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      placeholder="Code"
+                      maxLength={30}
+                      className="h-8 w-28 font-mono uppercase"
+                      invalid={!!fields.couponCode || (!!coupon && !coupon.ok)}
+                    />
+                  </dd>
+                </div>
+                {(fields.couponCode || (coupon && !coupon.ok)) && <p className="text-right text-xs text-red-600">{fields.couponCode ?? coupon?.message}</p>}
+                {coupon?.ok && coupon.kept && <p className="text-right text-xs text-zinc-500">The order's own coupon (no new use counted)</p>}
                 <div className="flex items-start justify-between gap-3">
                   <dt className="text-zinc-600">
                     Delivery

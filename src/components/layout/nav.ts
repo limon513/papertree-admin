@@ -117,7 +117,7 @@ export const NAV: NavGroup[] = [
   {
     label: 'Store',
     items: [
-      { label: 'Marketing', to: '/marketing', icon: Megaphone, module: 'marketing' },
+      { label: 'Marketing', to: '/marketing', icon: Megaphone, module: 'marketing', ready: true, description: 'Coupon codes' },
       {
         label: 'Website Content',
         to: '/content',
