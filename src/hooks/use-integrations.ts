@@ -23,6 +23,10 @@ export function useTestIntegration() {
   });
 }
 
+/** SMS left on the MiMSMS account (free: nothing is sent). */
+export const useSmsBalance = () =>
+  useMutation({ mutationFn: () => api<{ ok: true; balance: string } | { ok: false; message: string }>('/v1/admin/integrations/sms/balance', { method: 'POST', body: {} }) });
+
 export const useMessages = (channel: 'all' | 'email' | 'sms', page: number) =>
   useQuery({
     queryKey: [...KEY, 'messages', channel, page],

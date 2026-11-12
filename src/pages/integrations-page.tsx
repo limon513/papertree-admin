@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { AlertTriangle, CreditCard, KeyRound, Mail, MessageSquare, Send } from 'lucide-react';
 import { toast } from 'sonner';
-import { useIntegrations, useMessages, useSaveIntegration, useTestIntegration } from '@/hooks/use-integrations';
+import { useIntegrations, useMessages, useSaveIntegration, useSmsBalance, useTestIntegration } from '@/hooks/use-integrations';
 import { ApiError, errorMessage } from '@/lib/api';
 import type { Integration, IntegrationKey, MessageLogEntry } from '@/lib/types';
 import { cn, formatDateTime, timeAgo } from '@/lib/utils';
@@ -71,6 +71,7 @@ export function IntegrationsPage() {
                     <Input id="email-staff" value={f.str('staffEmail')} onChange={(e) => f.set('staffEmail', e.target.value)} invalid={!!f.errors.staffEmail} />
                   </Field>
                 </div>
+                <TestMode f={f} listName="testRecipients" what="emails" placeholder="you@example.com, staff@example.com" />
               </>
             )}
           </ServiceCard>
@@ -80,22 +81,27 @@ export function IntegrationsPage() {
             integration={byKey('sms')!}
             icon={<MessageSquare />}
             title="SMS"
-            intro="Sign-in codes and order updates by SMS, with BulkSMSBD. Until it is connected, SMS are only written to “Sent messages” below (test mode)."
+            intro="Sign-in codes and order updates by SMS, with MiMSMS. MiMSMS only accepts this server's fixed IP address: add it in sms.mimsms.com → Utility → Developer."
           >
             {(f) => (
               <>
                 <Field label="Send SMS" htmlFor="sms-provider">
                   <Select id="sms-provider" value={f.str('provider')} onChange={(e) => f.set('provider', e.target.value)}>
-                    <option value="log">Test mode: only write them to the log</option>
-                    <option value="bulksmsbd">BulkSMSBD (being connected)</option>
+                    <option value="log">Never send: only write them to the log</option>
+                    <option value="mimsms">With MiMSMS</option>
                   </Select>
                 </Field>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <SecretField f={f} name="apiKey" label="BulkSMSBD API key" hint="BulkSMSBD panel → API. Can be saved now; sending starts once it is connected." />
-                  <Field label="Sender ID" htmlFor="sms-sender" hint="The approved name or number messages come from.">
-                    <Input id="sms-sender" value={f.str('senderId')} onChange={(e) => f.set('senderId', e.target.value)} placeholder="8809617…" />
+                  <Field label="MiMSMS account email" htmlFor="sms-user" error={f.errors.userName} hint="The email you sign in to sms.mimsms.com with.">
+                    <Input id="sms-user" value={f.str('userName')} onChange={(e) => f.set('userName', e.target.value)} invalid={!!f.errors.userName} />
                   </Field>
+                  <Field label="Sender ID" htmlFor="sms-sender" error={f.errors.senderId} hint="sms.mimsms.com → Utility → Sender ID, exactly as shown.">
+                    <Input id="sms-sender" value={f.str('senderId')} onChange={(e) => f.set('senderId', e.target.value)} placeholder="8809612… or PaperTree" />
+                  </Field>
+                  <SecretField f={f} name="apiKey" label="MiMSMS API key" hint="sms.mimsms.com → Utility → Developer (it must be activated there)." />
                 </div>
+                <TestMode f={f} listName="testNumbers" what="SMS" placeholder="01712345678, 01812345678" />
+                <SmsBalance />
               </>
             )}
           </ServiceCard>
@@ -156,6 +162,7 @@ export function IntegrationsPage() {
 interface FormApi {
   str: (name: string) => string;
   bool: (name: string) => boolean;
+  raw: (name: string) => unknown;
   set: (name: string, value: unknown) => void;
   secret: (name: string) => { saved: string | null; draft: string | null | undefined; setDraft: (v: string | null | undefined) => void };
   errors: Record<string, string>;
@@ -173,6 +180,7 @@ function ServiceCard({ integration, icon, title, intro, children }: { integratio
   const f: FormApi = {
     str: (n) => String(settings[n] ?? ''),
     bool: (n) => !!settings[n],
+    raw: (n) => settings[n],
     set: (n, v) => setSettings((s) => ({ ...s, [n]: v })),
     secret: (n) => ({ saved: integration.secrets[n] ?? null, draft: secrets[n], setDraft: (v) => setSecrets((s) => ({ ...s, [n]: v })) }),
     errors,
@@ -252,6 +260,53 @@ function SecretField({ f, name, label, hint }: { f: FormApi; name: string; label
   );
 }
 
+/**
+ * Test mode: real messages cost money, so while testing they go only to these numbers / addresses
+ * (everything else is only written to "Sent messages"). Away from the live server it is always on.
+ */
+function TestMode({ f, listName, what, placeholder }: { f: FormApi; listName: string; what: string; placeholder: string }) {
+  const saved = (f.raw(listName) as string[] | undefined) ?? [];
+  const [text, setText] = useState(saved.join(', '));
+  return (
+    <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/50 p-3">
+      <SwitchField
+        id={`${listName}-mode`}
+        label="Test mode"
+        description={`${what === 'SMS' ? 'SMS go' : 'Emails go'} only to the test list below; the rest are only written to “Sent messages”. Switch it off at launch. (On a developer's computer it is always on.)`}
+        checked={f.bool('testMode')}
+        onCheckedChange={(v) => f.set('testMode', v)}
+      />
+      <Field label={what === 'SMS' ? 'Test numbers' : 'Test addresses'} htmlFor={`${listName}-list`} error={f.errors[listName] ?? Object.entries(f.errors).find(([k]) => k.startsWith(`${listName}.`))?.[1]} hint="Separated by commas. Up to 10.">
+        <Input
+          id={`${listName}-list`}
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            f.set(listName, e.target.value.split(/[,\s]+/).map((x) => x.trim()).filter(Boolean));
+          }}
+          placeholder={placeholder}
+        />
+      </Field>
+    </div>
+  );
+}
+
+/** Free check: SMS left on the account (also proves the key and the IP allow-list work). */
+function SmsBalance() {
+  const balance = useSmsBalance();
+  const r = balance.data;
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <Button type="button" variant="outline" size="sm" loading={balance.isPending} onClick={() => balance.mutate()}>
+        Check balance
+      </Button>
+      <span className="text-xs text-zinc-500">Free: nothing is sent. Save first.</span>
+      {r && (r.ok ? <span className="text-sm font-medium text-brand-700">{r.balance} SMS left</span> : <span className="text-sm text-red-700">{r.message}</span>)}
+      {balance.isError && <span className="text-sm text-red-700">{errorMessage(balance.error)}</span>}
+    </div>
+  );
+}
+
 function TestBox({ channel }: { channel: 'email' | 'sms' }) {
   const test = useTestIntegration();
   const [to, setTo] = useState('');
@@ -271,7 +326,7 @@ function TestBox({ channel }: { channel: 'email' | 'sms' }) {
       </Button>
       {result && (
         <span className={cn('text-sm', result.status === 'failed' ? 'text-red-700' : 'text-brand-700')} role="status">
-          {result.status === 'sent' ? 'Sent. Check the inbox.' : result.status === 'logged' ? 'Written to Sent messages (test mode).' : `Not sent: ${result.error}`}
+          {result.status === 'sent' ? (channel === 'sms' ? 'Sent. Check the phone.' : 'Sent. Check the inbox.') : result.status === 'logged' ? `Not sent: ${result.error ?? 'test mode'}. Written to Sent messages.` : `Not sent: ${result.error}`}
         </span>
       )}
     </form>
