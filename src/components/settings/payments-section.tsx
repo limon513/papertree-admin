@@ -23,6 +23,7 @@ const toForm = (c: CheckoutSettings) => ({
   delivery: c.wholesale.delivery,
   deliveryFee: toText(c.wholesale.deliveryFee),
   terms: c.wholesale.terms ?? '',
+  payAdvance: c.wholesale.payAdvance ?? '',
 });
 
 export function PaymentsSection({ data }: { data: SettingsResponse }) {
@@ -43,6 +44,7 @@ export function PaymentsSection({ data }: { data: SettingsResponse }) {
           delivery: form.delivery,
           deliveryFee: form.delivery === 'fixed' ? toNumber(form.deliveryFee) : null,
           terms: form.terms.trim() || null,
+          payAdvance: form.payAdvance.trim() || null,
         },
         // Saved with the rest of the checkout setting: kept as it is.
         bulk: data.checkout.bulk,
@@ -159,6 +161,20 @@ export function PaymentsSection({ data }: { data: SettingsResponse }) {
                 </Field>
               )}
             </div>
+            <Field
+              label="How to pay the advance"
+              htmlFor="ws-pay-advance"
+              error={fields['wholesale.payAdvance']}
+              hint="Shown at checkout, on the order page and in the order email. e.g. bKash (Merchant) 01XXXXXXXXX or Nagad 01XXXXXXXXX."
+            >
+              <Textarea
+                id="ws-pay-advance"
+                rows={2}
+                value={form.payAdvance}
+                onChange={(e) => setForm({ ...form, payAdvance: e.target.value })}
+                maxLength={500}
+              />
+            </Field>
             <Field
               label="Terms shown at checkout"
               htmlFor="ws-terms"
