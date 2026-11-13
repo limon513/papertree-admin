@@ -7,12 +7,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { SaveBar, saveErrors, Section } from './shared';
 
-const EVENTS: Record<MessageEvent, { label: string; when: string }> = {
+type Row = MessageEvent | 'businessApproved';
+const ROWS: Row[] = [...MESSAGE_EVENTS, 'businessApproved'];
+
+const EVENTS: Record<Row, { label: string; when: string }> = {
   placed: { label: 'Order placed', when: 'A shopper places an order on the website. (We call them to confirm anyway.)' },
   confirmed: { label: 'Confirmed', when: 'You mark the order confirmed.' },
   shipped: { label: 'On the way', when: 'You mark it shipped. Includes the courier and tracking code.' },
   delivered: { label: 'Delivered', when: 'You mark it delivered. A thank-you.' },
   cancelled: { label: 'Cancelled', when: 'You cancel the order.' },
+  businessApproved: { label: 'Business approved', when: 'You approve a business account: they can now buy at wholesale prices.' },
 };
 
 /** Settings > Customer messages: which SMS and emails customers get as their order moves on. */
@@ -26,7 +30,7 @@ export function MessagesSection({ data }: { data: SettingsResponse }) {
   const onPath = (events: MessageEvent[]) => events.filter((e) => form[e].sms).length;
   const smsCount = Math.max(onPath(['placed', 'confirmed', 'shipped', 'delivered']), onPath(['placed', 'confirmed', 'cancelled']));
 
-  const set = (event: MessageEvent, channel: 'sms' | 'email', on: boolean) => setForm({ ...form, [event]: { ...form[event], [channel]: on } });
+  const set = (event: Row, channel: 'sms' | 'email', on: boolean) => setForm({ ...form, [event]: { ...form[event], [channel]: on } });
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -60,7 +64,7 @@ export function MessagesSection({ data }: { data: SettingsResponse }) {
                 <span className="text-center">SMS</span>
                 <span className="text-center">Email</span>
               </div>
-              {MESSAGE_EVENTS.map((event) => (
+              {ROWS.map((event) => (
                 <div key={event} className="border-t border-zinc-200 px-4 py-3">
                   <div className="grid grid-cols-[minmax(0,1fr)_64px_64px] items-center gap-2">
                     <span className="text-sm">

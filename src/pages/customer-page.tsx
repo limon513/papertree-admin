@@ -348,7 +348,7 @@ function BusinessCard({ customer, onEdit }: { customer: Customer; onEdit: () => 
             <p className="rounded-md bg-amber-50 px-3 py-2 text-amber-900">
               Asked for a business account{customer.businessName ? ` for ${customer.businessName}` : ''}. Approve to give wholesale prices.
             </p>
-            {customer.tradeLicense && <p className="text-zinc-600">Trade licence: {customer.tradeLicense}</p>}
+            <BusinessDetails customer={customer} />
             <div className="flex gap-2">
               <Button size="sm" onClick={() => decide('approved')} disabled={setBusiness.isPending}>
                 Approve
@@ -374,7 +374,7 @@ function BusinessCard({ customer, onEdit }: { customer: Customer; onEdit: () => 
             <p className="text-zinc-600">
               Wholesale prices on wholesale orders. Their own terms below replace the shop terms; empty fields keep the shop terms.
             </p>
-            {customer.tradeLicense && <p className="text-zinc-600">Trade licence: {customer.tradeLicense}</p>}
+            <BusinessDetails customer={customer} />
             <div className="grid grid-cols-2 gap-3">
               <Field label="Advance" htmlFor="terms-advance" error={fields['terms.advancePercent']}>
                 <AddonInput id="terms-advance" suffix="%" inputMode="decimal" placeholder="Shop" value={form.advance} onChange={(e) => setForm({ ...form, advance: e.target.value })} />
@@ -465,5 +465,35 @@ function BlockDialog({ customer, onDone }: { customer: Customer; onDone: () => v
         </DialogFooter>
       </form>
     </DialogContent>
+  );
+}
+
+const BUSINESS_TYPE: Record<NonNullable<Customer['businessType']>, string> = {
+  shop: 'Shop or reseller',
+  school: 'School, college or coaching centre',
+  office: 'Office or company',
+  other: 'Other',
+};
+
+/** What the business told us (website sign-up) and its licence. */
+function BusinessDetails({ customer }: { customer: Customer }) {
+  const rows: [string, string | null][] = [
+    ['Business', customer.businessName],
+    ['Kind', customer.businessType ? BUSINESS_TYPE[customer.businessType] : null],
+    ['Address', customer.businessAddress],
+    ['Trade licence', customer.tradeLicense],
+    ['Asked on the website', customer.businessAppliedAt ? formatDateTime(customer.businessAppliedAt) : null],
+  ];
+  const shown = rows.filter(([, v]) => v);
+  if (!shown.length) return null;
+  return (
+    <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1">
+      {shown.map(([k, v]) => (
+        <div key={k} className="contents">
+          <dt className="text-zinc-500">{k}</dt>
+          <dd className="text-zinc-800">{v}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

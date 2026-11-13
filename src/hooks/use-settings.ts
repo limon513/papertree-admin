@@ -48,7 +48,7 @@ export function useSaveMessages() {
 
 /** Example SMS for each order step (a made-up order, the shop's own name and phone). */
 export const useSampleSms = () =>
-  useQuery({ queryKey: [...SETTINGS_KEY, 'sample-sms'], queryFn: () => api<Record<MessageEvent, string>>('/v1/admin/settings/messages/samples') });
+  useQuery({ queryKey: [...SETTINGS_KEY, 'sample-sms'], queryFn: () => api<Record<MessageEvent | 'businessApproved', string>>('/v1/admin/settings/messages/samples') });
 
 /** Districts and areas never change, so they are loaded once. */
 export function useBdLocations() {
