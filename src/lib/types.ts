@@ -325,6 +325,8 @@ export interface CheckoutSettings {
     delivery: WholesaleDelivery;
     deliveryFee: number | null;
     terms: string | null;
+    /** How to pay the advance (bKash / Nagad numbers), shown to the business. */
+    payAdvance: string | null;
   };
   bulk: { enabled: boolean; tiers: BulkTier[]; onSale: boolean };
 }
