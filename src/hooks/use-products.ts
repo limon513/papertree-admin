@@ -9,6 +9,8 @@ export interface ProductFilters {
   status?: ProductStatus;
   brandId?: number;
   categoryId?: number;
+  /** Products with this website tag. */
+  labelId?: number;
   stock?: 'low' | 'out';
   sort?: 'updated' | 'name' | 'price' | 'stock';
   page?: number;
@@ -24,6 +26,8 @@ export interface ProductInput {
   brandId: number | null;
   categoryIds: number[];
   primaryCategoryId: number | null;
+  /** Website tags (badges). */
+  labelIds: number[];
   tags: string[];
   imageIds: number[];
   options: { name: string; values: string[] }[];
@@ -118,6 +122,7 @@ export type BulkAction =
   | { action: 'set-status'; status: ProductStatus }
   | { action: 'add-category' | 'remove-category'; categoryId: number }
   | { action: 'set-brand'; brandId: number | null }
+  | { action: 'add-label' | 'remove-label'; labelId: number }
   | { action: 'delete' };
 
 /** One change for many products. */

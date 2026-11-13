@@ -47,6 +47,7 @@ import { Field } from '@/components/ui/field';
 import { Input, Select, Textarea } from '@/components/ui/input';
 import { ErrorAlert, LoadError, Skeleton } from '@/components/ui/misc';
 import { TagsInput } from '@/components/ui/tags-input';
+import { LabelPicker } from '@/components/products/label-picker';
 import { BulkTiersEditor, describeTiers, toTierForms } from '@/components/settings/bulk-tiers';
 import { useSettings } from '@/hooks/use-settings';
 
@@ -415,8 +416,11 @@ function ProductEditor({ product }: { product: Product | undefined }) {
                 error={fields.categoryIds ?? fields.primaryCategoryId}
               />
             </div>
-            <Field label="Tags" htmlFor="product-tags" error={fields.tags} hint="Words that help search, e.g. school, office.">
-              <TagsInput id="product-tags" value={form.tags} onChange={(tags) => set({ tags })} placeholder="Add a tag" />
+            <Field label="Tags" htmlFor="product-labels" error={fields.labelIds} hint="Badges on the website, like Overseas. Manage them under Products → Tags.">
+              <LabelPicker id="product-labels" value={form.labelIds} onChange={(labelIds) => set({ labelIds })} />
+            </Field>
+            <Field label="Search keywords" htmlFor="product-tags" error={fields.tags} hint="Not shown: words that help search find it, e.g. school, office.">
+              <TagsInput id="product-tags" value={form.tags} onChange={(tags) => set({ tags })} placeholder="Add a keyword" />
             </Field>
           </Section>
 

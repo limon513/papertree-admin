@@ -15,7 +15,7 @@ import {
   Settings,
   ShieldCheck,
   ShoppingCart,
-  Tags,
+  Tag, Tags,
   UserCog,
   Users,
   WholeWord,
@@ -69,6 +69,14 @@ export const NAV: NavGroup[] = [
         module: 'products',
         ready: true,
         description: 'Brands for products and the brand shop',
+      },
+      {
+        label: 'Tags',
+        to: '/tags',
+        icon: Tag,
+        module: 'products',
+        ready: true,
+        description: 'Badges like Overseas on the website, with a filter',
       },
       {
         label: 'Product Imports',

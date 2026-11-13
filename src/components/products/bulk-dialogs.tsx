@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useBrands, useCategories } from '@/hooks/use-catalog';
+import { useLabels } from '@/hooks/use-labels';
 import type { BulkAction } from '@/hooks/use-products';
 import type { Category } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -126,6 +127,61 @@ export function BulkBrandDialog({ count, loading, onApply, onCancel }: BulkDialo
           </Button>
           <Button type="submit" loading={loading} disabled={!brandId}>
             Set brand
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
+
+export function BulkLabelDialog({ count, loading, onApply, onCancel }: BulkDialogProps) {
+  const labels = useLabels();
+  const [mode, setMode] = useState<'add-label' | 'remove-label'>('add-label');
+  const [labelId, setLabelId] = useState('');
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (labelId) onApply({ action: mode, labelId: Number(labelId) });
+  };
+
+  return (
+    <DialogContent title={`Tag ${count} product${count === 1 ? '' : 's'}`}>
+      <form onSubmit={submit}>
+        <DialogBody>
+          <div className="flex rounded-lg bg-zinc-100 p-0.5" role="group" aria-label="Add or remove">
+            {(['add-label', 'remove-label'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                aria-pressed={mode === m}
+                className={
+                  'flex-1 cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors ' +
+                  (mode === m ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-600 hover:text-zinc-900')
+                }
+              >
+                {m === 'add-label' ? 'Add a tag' : 'Remove a tag'}
+              </button>
+            ))}
+          </div>
+          <Field label="Tag" htmlFor="bulk-label" hint={labels.data?.items.length === 0 ? 'No tags yet: add them under Products → Tags.' : 'Products keep their other tags.'}>
+            <Select id="bulk-label" value={labelId} onChange={(e) => setLabelId(e.target.value)} autoFocus>
+              <option value="">Choose a tag</option>
+              {labels.data?.items.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                  {l.isActive ? '' : ' (hidden)'}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </DialogBody>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={loading} disabled={!labelId}>
+            {mode === 'add-label' ? 'Add' : 'Remove'}
           </Button>
         </DialogFooter>
       </form>

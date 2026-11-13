@@ -55,6 +55,7 @@ export interface ProductForm {
   brandId: number | null;
   categoryIds: number[];
   primaryCategoryId: number | null;
+  labelIds: number[];
   tags: string[];
   images: Media[];
   options: OptionForm[];
@@ -110,6 +111,7 @@ export function fromProduct(p?: Product): ProductForm {
       brandId: null,
       categoryIds: [],
       primaryCategoryId: null,
+      labelIds: [],
       tags: [],
       images: [],
       options: [],
@@ -130,6 +132,7 @@ export function fromProduct(p?: Product): ProductForm {
     brandId: p.brandId,
     categoryIds: p.categoryIds,
     primaryCategoryId: p.primaryCategoryId,
+    labelIds: p.labelIds ?? [],
     tags: p.tags,
     images: p.images,
     options: p.options.map((o) => ({ key: newKey(), name: o.name, values: o.values })),
@@ -183,6 +186,7 @@ export function toInput(form: ProductForm, locations: StockLocation[]): ProductI
     brandId: form.brandId,
     categoryIds: form.categoryIds,
     primaryCategoryId: form.primaryCategoryId,
+    labelIds: form.labelIds,
     tags: form.tags,
     imageIds: form.images.map((m) => m.id),
     options,
