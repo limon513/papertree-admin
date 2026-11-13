@@ -341,7 +341,7 @@ export type ProductBulk = { mode: 'off' } | { mode: 'own'; tiers: BulkTier[] } |
 export const MESSAGE_EVENTS = ['placed', 'confirmed', 'shipped', 'delivered', 'cancelled'] as const;
 export type MessageEvent = (typeof MESSAGE_EVENTS)[number];
 /** Which messages a customer gets about their order, by SMS and by email. */
-export type MessagesSettings = Record<MessageEvent, { sms: boolean; email: boolean }>;
+export type MessagesSettings = Record<MessageEvent | 'businessApproved', { sms: boolean; email: boolean }>;
 
 export interface SettingsResponse {
   store: StoreSettings;
@@ -601,6 +601,10 @@ export interface Customer {
   businessName: string | null;
   businessStatus: BusinessStatus | null;
   tradeLicense: string | null;
+  /** From the website's business sign-up. */
+  businessType: 'shop' | 'school' | 'office' | 'other' | null;
+  businessAddress: string | null;
+  businessAppliedAt: string | null;
   wholesaleTerms: WholesaleTerms | null;
   isBlocked: boolean;
   blockedReason: string | null;
