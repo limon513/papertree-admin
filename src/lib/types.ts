@@ -338,9 +338,15 @@ export interface BulkTier {
 /** A product's bulk rule. null: the shop's steps. */
 export type ProductBulk = { mode: 'off' } | { mode: 'own'; tiers: BulkTier[] } | null;
 
+export const MESSAGE_EVENTS = ['placed', 'confirmed', 'shipped', 'delivered', 'cancelled'] as const;
+export type MessageEvent = (typeof MESSAGE_EVENTS)[number];
+/** Which messages a customer gets about their order, by SMS and by email. */
+export type MessagesSettings = Record<MessageEvent, { sms: boolean; email: boolean }>;
+
 export interface SettingsResponse {
   store: StoreSettings;
   checkout: CheckoutSettings;
+  messages: MessagesSettings;
   logo: Media | null;
 }
 
@@ -484,6 +490,8 @@ export interface Order {
   items: OrderItem[];
   payments: { id: number; method: PaymentMethod; amount: number; reference: string | null; note: string | null; by: string | null; createdAt: string }[];
   events: { id: number; type: string; message: string; by: string | null; createdAt: string }[];
+  /** SMS and emails the customer was sent about this order, newest first. logged: test mode, not sent. */
+  messages: { id: number; channel: 'sms' | 'email'; purpose: string; to: string; status: 'sent' | 'failed' | 'logged'; error: string | null; createdAt: string }[];
   customer: {
     id: number;
     type: 'retail' | 'business';

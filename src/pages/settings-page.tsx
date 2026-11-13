@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/layout/page-header';
 import { DeliverySection } from '@/components/settings/delivery-section';
 import { PaymentsSection } from '@/components/settings/payments-section';
 import { BulkSection } from '@/components/settings/bulk-section';
+import { MessagesSection } from '@/components/settings/messages-section';
 import { StockLocationsSection } from '@/components/settings/stock-locations-section';
 import { StoreSection } from '@/components/settings/store-section';
 import { LoadError, Skeleton } from '@/components/ui/misc';
@@ -15,6 +16,7 @@ const TABS = [
   { key: 'delivery', label: 'Delivery' },
   { key: 'payments', label: 'Payments & wholesale' },
   { key: 'bulk', label: 'Bulk discounts' },
+  { key: 'messages', label: 'Customer messages' },
   { key: 'locations', label: 'Stock locations' },
 ] as const;
 
@@ -27,7 +29,7 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Settings" description="Store details, delivery charges, payments, bulk discounts and stock locations." />
+      <PageHeader title="Settings" description="Store details, delivery charges, payments, bulk discounts, customer messages and stock locations." />
 
       <div role="tablist" className="flex gap-1 overflow-x-auto border-b border-zinc-200">
         {TABS.map((t) => (
@@ -59,6 +61,8 @@ export function SettingsPage() {
         <PaymentsSection data={settings.data} />
       ) : tab === 'bulk' ? (
         <BulkSection data={settings.data} />
+      ) : tab === 'messages' ? (
+        <MessagesSection data={settings.data} />
       ) : (
         <StoreSection data={settings.data} />
       )}

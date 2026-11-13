@@ -84,7 +84,7 @@ export function useSaveOrder() {
 export function useSetOrderStatus(id: number) {
   const saved = useOrderSaved();
   return useMutation({
-    mutationFn: (input: { status: OrderStatus; note?: string | null; courier?: string | null; trackingCode?: string | null; collectDue?: boolean }) =>
+    mutationFn: (input: { status: OrderStatus; note?: string | null; courier?: string | null; trackingCode?: string | null; collectDue?: boolean; notify?: boolean }) =>
       api<Order>(`/v1/admin/orders/${id}/status`, { method: 'POST', body: input }),
     onSuccess: saved,
   });

@@ -241,6 +241,7 @@ export function OrderPage() {
               )}
             </CardContent>
           </Card>
+          <MessagesCard order={o} />
           <HistoryCard order={o} />
         </div>
       </div>
@@ -295,6 +296,9 @@ function CourierField({ value, onChange }: { value: string; onChange: (v: string
   );
 }
 
+/** Status changes the customer can be told about. */
+const NOTIFY_STEPS: OrderStatus[] = ['confirmed', 'shipped', 'delivered', 'cancelled'];
+
 function StatusDialog({ order, to, onDone }: { order: Order; to: OrderStatus; onDone: () => void }) {
   const setStatus = useSetOrderStatus(order.id);
   const due = Math.round((order.total - order.paidAmount) * 100) / 100;
@@ -302,6 +306,9 @@ function StatusDialog({ order, to, onDone }: { order: Order; to: OrderStatus; on
   const [courier, setCourier] = useState(order.courier ?? '');
   const [tracking, setTracking] = useState(order.trackingCode ?? '');
   const [collect, setCollect] = useState(order.paymentMethod === 'cod');
+  // Sales in the shop: the customer is standing there, no message needed.
+  const canNotify = NOTIFY_STEPS.includes(to);
+  const [notify, setNotify] = useState(order.channel !== 'shop');
   const fields = setStatus.error instanceof ApiError ? setStatus.error.fields : {};
 
   const submit = (e: FormEvent) => {
@@ -312,6 +319,7 @@ function StatusDialog({ order, to, onDone }: { order: Order; to: OrderStatus; on
         note: note.trim() || null,
         ...(to === 'shipped' && { courier: courier.trim() || null, trackingCode: tracking.trim() || null }),
         collectDue: to === 'delivered' && collect,
+        notify: canNotify && notify,
       },
       {
         onSuccess: () => {
@@ -351,6 +359,17 @@ function StatusDialog({ order, to, onDone }: { order: Order; to: OrderStatus; on
               The items go back into stock.
               {order.paidAmount > 0 && ` ${formatMoney(order.paidAmount)} was paid: record the refund under Payment.`}
             </p>
+          )}
+          {canNotify && (
+            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-zinc-700">
+              <Checkbox checked={notify} onCheckedChange={(v) => setNotify(v === true)} className="mt-0.5" />
+              <span>
+                Tell the customer
+                <span className="block text-xs text-zinc-500">
+                  By SMS and/or email, as set in Settings → Customer messages. Goes in about a minute, so a wrong click can still be undone.
+                </span>
+              </span>
+            </label>
           )}
           <Field label="Note" htmlFor="status-note" hint="Optional, shown in the history">
             <Textarea id="status-note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} />
@@ -509,6 +528,53 @@ function CourierCard({ order }: { order: Order }) {
           {order.deliveredAt && <div>Delivered {formatDateTime(order.deliveredAt)}</div>}
           {order.cancelledAt && <div>Cancelled {formatDateTime(order.cancelledAt)}</div>}
         </dl>
+      </CardContent>
+    </Card>
+  );
+}
+
+const MESSAGE_LABEL: Record<string, string> = {
+  placed: 'Order placed',
+  confirmed: 'Confirmed',
+  shipped: 'On the way',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+};
+const MESSAGE_STATUS = {
+  sent: { label: 'Sent', variant: 'green' },
+  logged: { label: 'Test mode, not sent', variant: 'gray' },
+  failed: { label: 'Failed', variant: 'red' },
+} as const;
+
+/** SMS and emails the customer got about this order. Hidden until there is one. */
+function MessagesCard({ order }: { order: Order }) {
+  if (!order.messages.length) return null;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Messages to the customer</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-3">
+          {order.messages.map((m) => {
+            const step = m.purpose.match(/^order\.(\w+) /)?.[1] ?? '';
+            const state = MESSAGE_STATUS[m.status];
+            return (
+              <li key={m.id} className="text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium text-zinc-800">
+                    {m.channel === 'sms' ? 'SMS' : 'Email'} · {MESSAGE_LABEL[step] ?? step}
+                  </span>
+                  <Badge variant={state.variant}>{state.label}</Badge>
+                </div>
+                <p className="text-xs text-zinc-500" title={formatDateTime(m.createdAt)}>
+                  {m.to} · {timeAgo(m.createdAt)}
+                </p>
+                {m.status === 'failed' && m.error && <p className="mt-0.5 text-xs text-red-700">{m.error}</p>}
+              </li>
+            );
+          })}
+        </ul>
       </CardContent>
     </Card>
   );

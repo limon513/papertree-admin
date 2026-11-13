@@ -6,6 +6,8 @@ import type {
   DeliveryQuote,
   DeliveryZone,
   ListResponse,
+  MessageEvent,
+  MessagesSettings,
   Media,
   SettingsResponse,
   StockLocationRow,
@@ -35,6 +37,18 @@ export function useSaveCheckout() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: SETTINGS_KEY }),
   });
 }
+
+export function useSaveMessages() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: MessagesSettings) => api<MessagesSettings>('/v1/admin/settings/messages', { method: 'PUT', body: input }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: SETTINGS_KEY }),
+  });
+}
+
+/** Example SMS for each order step (a made-up order, the shop's own name and phone). */
+export const useSampleSms = () =>
+  useQuery({ queryKey: [...SETTINGS_KEY, 'sample-sms'], queryFn: () => api<Record<MessageEvent, string>>('/v1/admin/settings/messages/samples') });
 
 /** Districts and areas never change, so they are loaded once. */
 export function useBdLocations() {
