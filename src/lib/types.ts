@@ -167,6 +167,8 @@ export interface Product {
   brandId: number | null;
   categoryIds: number[];
   primaryCategoryId: number | null;
+  /** Website tags (badges). */
+  labelIds?: number[];
   tags: string[];
   images: Media[];
   options: ProductOption[];

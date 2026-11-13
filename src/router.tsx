@@ -150,6 +150,19 @@ export const router = createBrowserRouter([
             },
           },
           {
+            path: 'tags',
+            lazy: async () => {
+              const { LabelsPage } = await import('@/pages/labels-page');
+              return {
+                Component: () => (
+                  <RequireModule module="products">
+                    <LabelsPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
             path: 'brands',
             lazy: async () => {
               const { BrandsPage } = await import('@/pages/brands-page');

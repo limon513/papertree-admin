@@ -10,7 +10,7 @@ import {
   Package,
   Plus,
   Search,
-  Tags,
+  Tag, Tags,
   Trash2,
   X,
 } from 'lucide-react';
@@ -22,7 +22,8 @@ import type { ProductListItem, ProductStatus } from '@/lib/types';
 import { cn, formatMoney, timeAgo } from '@/lib/utils';
 import { CatalogThumb } from '@/components/catalog/catalog-thumb';
 import { PageHeader } from '@/components/layout/page-header';
-import { BulkBrandDialog, BulkCategoryDialog } from '@/components/products/bulk-dialogs';
+import { BulkBrandDialog, BulkCategoryDialog, BulkLabelDialog } from '@/components/products/bulk-dialogs';
+import { useLabels } from '@/hooks/use-labels';
 import { QuickStockDialog } from '@/components/products/quick-stock-dialog';
 import { STATUS_INFO } from '@/components/products/status';
 import { Badge } from '@/components/ui/badge';
@@ -50,7 +51,7 @@ const SORTS = {
 
 const STATUS_DONE: Record<ProductStatus, string> = { active: 'published', draft: 'moved to drafts', archived: 'archived' };
 
-type BulkDialog = 'category' | 'brand' | 'delete' | null;
+type BulkDialog = 'category' | 'brand' | 'label' | 'delete' | null;
 
 export function ProductsPage() {
   const navigate = useNavigate();
@@ -58,6 +59,7 @@ export function ProductsPage() {
   const brands = useBrands();
   const categories = useCategories();
   const bulk = useBulkProducts();
+  const labels = useLabels();
 
   // Filters live in the address bar, so Back and shared links keep them.
   const filters: ProductFilters = {
@@ -65,6 +67,7 @@ export function ProductsPage() {
     status: (params.get('status') as ProductStatus | null) ?? undefined,
     brandId: params.get('brand') ? Number(params.get('brand')) : undefined,
     categoryId: params.get('category') ? Number(params.get('category')) : undefined,
+    labelId: params.get('label') ? Number(params.get('label')) : undefined,
     stock: (params.get('stock') as ProductFilters['stock'] | null) ?? undefined,
     sort: (params.get('sort') as ProductFilters['sort']) ?? 'updated',
     page: Number(params.get('page') ?? 1),
@@ -97,7 +100,7 @@ export function ProductsPage() {
 
   const data = products.data;
   const items = data?.items ?? [];
-  const hasFilters = Boolean(filters.search || filters.brandId || filters.categoryId || filters.stock);
+  const hasFilters = Boolean(filters.search || filters.brandId || filters.categoryId || filters.labelId || filters.stock);
   const first = data ? (data.page - 1) * data.pageSize + 1 : 0;
   const last = data ? Math.min(data.page * data.pageSize, data.total) : 0;
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
@@ -139,7 +142,9 @@ export function ProductsPage() {
                   ? `Brand set on ${n}`
                   : updated === 0
                     ? 'Nothing to change'
-                    : `${action.action === 'add-category' ? 'Added' : 'Removed'} ${n}`;
+                    : action.action === 'add-label' || action.action === 'remove-label'
+                      ? `Tag ${action.action === 'add-label' ? 'added to' : 'removed from'} ${n}`
+                      : `${action.action === 'add-category' ? 'Added' : 'Removed'} ${n}`;
           toast.success(message);
           setSelected(new Set());
           setDialog(null);
@@ -250,6 +255,16 @@ export function ProductsPage() {
                     </option>
                   ))}
               </Select>
+              {(labels.data?.items.length ?? 0) > 0 && (
+                <Select value={filters.labelId ?? ''} onChange={(e) => setParam('label', e.target.value || undefined)} className="h-9" aria-label="Filter by tag">
+                  <option value="">All tags</option>
+                  {labels.data?.items.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
               <Select
                 value={filters.stock ?? ''}
                 onChange={(e) => setParam('stock', e.target.value || undefined)}
@@ -391,6 +406,9 @@ export function ProductsPage() {
             <Button variant="outline" size="sm" disabled={bulk.isPending} onClick={() => setDialog('brand')}>
               <Tags /> Brand
             </Button>
+            <Button variant="outline" size="sm" disabled={bulk.isPending} onClick={() => setDialog('label')}>
+              <Tag /> Tag
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -404,13 +422,14 @@ export function ProductsPage() {
         </div>
       )}
 
-      <Dialog open={dialog === 'category' || dialog === 'brand'} onOpenChange={(open) => !open && setDialog(null)}>
+      <Dialog open={dialog === 'category' || dialog === 'brand' || dialog === 'label'} onOpenChange={(open) => !open && setDialog(null)}>
         {dialog === 'category' && (
           <BulkCategoryDialog count={selected.size} loading={bulk.isPending} onApply={runBulk} onCancel={() => setDialog(null)} />
         )}
         {dialog === 'brand' && (
           <BulkBrandDialog count={selected.size} loading={bulk.isPending} onApply={runBulk} onCancel={() => setDialog(null)} />
         )}
+        {dialog === 'label' && <BulkLabelDialog count={selected.size} loading={bulk.isPending} onApply={runBulk} onCancel={() => setDialog(null)} />}
       </Dialog>
 
       <ConfirmDialog
