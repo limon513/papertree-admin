@@ -23,6 +23,10 @@ export function useTestIntegration() {
   });
 }
 
+/** Money on the Steadfast account (free: only reads, also checks the keys). */
+export const useSteadfastBalance = () =>
+  useMutation({ mutationFn: () => api<{ ok: true; balance: number } | { ok: false; message: string }>('/v1/admin/integrations/steadfast/balance', { method: 'POST', body: {} }) });
+
 /** SMS left on the MiMSMS account (free: nothing is sent). */
 export const useSmsBalance = () =>
   useMutation({ mutationFn: () => api<{ ok: true; balance: string } | { ok: false; message: string }>('/v1/admin/integrations/sms/balance', { method: 'POST', body: {} }) });

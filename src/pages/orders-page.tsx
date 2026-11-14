@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { ChevronLeft, ChevronRight, Plus, Search, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Search, ShoppingCart, Truck, X } from 'lucide-react';
 import { useOrders, type OrderFilters } from '@/hooks/use-orders';
 import { errorMessage } from '@/lib/api';
 import type { OrderChannel, OrderStatus, OrderType, PaymentStatus } from '@/lib/types';
@@ -10,6 +10,9 @@ import { PageHeader } from '@/components/layout/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog } from '@/components/ui/dialog';
+import { CourierStatusBadge, SendToSteadfastDialog } from '@/components/orders/steadfast';
 import { Input, Select } from '@/components/ui/input';
 import { EmptyState, LoadError, Skeleton } from '@/components/ui/misc';
 
@@ -42,6 +45,16 @@ export function OrdersPage() {
     page: Number(params.get('page') ?? 1),
   };
   const orders = useOrders(filters);
+  // Ticked orders (kept across pages and tabs until cleared), for Send to Steadfast.
+  const [picked, setPicked] = useState<Map<number, NonNullable<typeof orders.data>['items'][number]>>(new Map());
+  const [sending, setSending] = useState(false);
+  const togglePick = (o: NonNullable<typeof orders.data>['items'][number], on: boolean) =>
+    setPicked((prev) => {
+      const next = new Map(prev);
+      if (on) next.set(o.id, o);
+      else next.delete(o.id);
+      return next;
+    });
 
   const setParam = (key: string, value: string | undefined) => {
     const next = new URLSearchParams(window.location.search);
@@ -160,7 +173,14 @@ export function OrdersPage() {
             <table className="w-full text-sm">
               <thead className="border-b border-zinc-200 text-left text-xs font-medium tracking-wide text-zinc-500 uppercase">
                 <tr>
-                  <th className="px-5 py-3">Order</th>
+                  <th className="w-10 py-3 pl-5">
+                    <Checkbox
+                      aria-label="Tick all on this page"
+                      checked={items.length > 0 && items.every((o) => picked.has(o.id))}
+                      onCheckedChange={(v) => items.forEach((o) => togglePick(o, v === true))}
+                    />
+                  </th>
+                  <th className="px-3 py-3">Order</th>
                   <th className="px-3 py-3">Customer</th>
                   <th className="px-3 py-3">Status</th>
                   <th className="hidden px-3 py-3 md:table-cell">Payment</th>
@@ -169,8 +189,11 @@ export function OrdersPage() {
               </thead>
               <tbody className="divide-y divide-zinc-100">
                 {items.map((o) => (
-                  <tr key={o.id} className="cursor-pointer hover:bg-zinc-50/70" onClick={() => navigate(`/orders/${o.id}`)}>
-                    <td className="px-5 py-3">
+                  <tr key={o.id} className={cn('cursor-pointer hover:bg-zinc-50/70', picked.has(o.id) && 'bg-brand-50/40')} onClick={() => navigate(`/orders/${o.id}`)}>
+                    <td className="py-3 pl-5" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox aria-label={`Tick ${orderNo(o.number)}`} checked={picked.has(o.id)} onCheckedChange={(v) => togglePick(o, v === true)} />
+                    </td>
+                    <td className="px-3 py-3">
                       <Link to={`/orders/${o.id}`} className="font-medium text-zinc-900 hover:text-brand-700" onClick={(e) => e.stopPropagation()}>
                         {orderNo(o.number)}
                       </Link>
@@ -189,7 +212,10 @@ export function OrdersPage() {
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <OrderStatusBadge status={o.status} />
+                      <div className="flex flex-col items-start gap-1">
+                        <OrderStatusBadge status={o.status} />
+                        <CourierStatusBadge status={o.courierStatus} />
+                      </div>
                     </td>
                     <td className="hidden px-3 py-3 md:table-cell">
                       <PaymentBadge status={o.paymentStatus} />
@@ -223,6 +249,31 @@ export function OrdersPage() {
           </div>
         )}
       </Card>
+
+      {picked.size > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 shadow-[0_-4px_12px_rgba(0,0,0,0.04)] backdrop-blur lg:left-64">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-3 sm:px-6 lg:px-8">
+            <span className="mr-1 text-sm font-medium text-zinc-900">{picked.size} ticked</span>
+            <Button variant="ghost" size="sm" onClick={() => setPicked(new Map())} aria-label="Clear the ticks">
+              <X /> Clear
+            </Button>
+            <Button size="sm" onClick={() => setSending(true)}>
+              <Truck /> Send to Steadfast
+            </Button>
+          </div>
+        </div>
+      )}
+      <Dialog open={sending} onOpenChange={(open) => !open && setSending(false)}>
+        {sending && (
+          <SendToSteadfastDialog
+            orders={[...picked.values()]}
+            onDone={(sent) => {
+              setSending(false);
+              if (sent) setPicked(new Map());
+            }}
+          />
+        )}
+      </Dialog>
     </div>
   );
 }
