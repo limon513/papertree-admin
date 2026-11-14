@@ -1,8 +1,8 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
-import { AlertTriangle, CreditCard, KeyRound, Mail, MessageSquare, Send } from 'lucide-react';
+import { AlertTriangle, Copy, CreditCard, KeyRound, Mail, MessageSquare, Send, Truck } from 'lucide-react';
 import { toast } from 'sonner';
-import { useIntegrations, useMessages, useSaveIntegration, useSmsBalance, useTestIntegration } from '@/hooks/use-integrations';
-import { ApiError, errorMessage } from '@/lib/api';
+import { useIntegrations, useMessages, useSaveIntegration, useSmsBalance, useSteadfastBalance, useTestIntegration } from '@/hooks/use-integrations';
+import { API_URL, ApiError, errorMessage } from '@/lib/api';
 import type { Integration, IntegrationKey, MessageLogEntry } from '@/lib/types';
 import { cn, formatDateTime, timeAgo } from '@/lib/utils';
 import { PageHeader } from '@/components/layout/page-header';
@@ -150,6 +150,35 @@ export function IntegrationsPage() {
             )}
           </ServiceCard>
 
+          {byKey('steadfast') && (
+            <ServiceCard
+              integration={byKey('steadfast')!}
+              icon={<Truck />}
+              title="Steadfast courier"
+              intro="Send ready orders to Steadfast from the order list in one click; the tracking code comes back on each order, and Steadfast's updates (on the way, delivered) come back by themselves."
+            >
+              {(f) => (
+                <>
+                  <SwitchField id="sf-enabled" label="Send orders with Steadfast" checked={f.bool('enabled')} onCheckedChange={(v) => f.set('enabled', v)} />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <SecretField f={f} name="apiKey" label="API key" hint="Steadfast portal → API (the API key)." />
+                    <SecretField f={f} name="secretKey" label="Secret key" hint="Steadfast portal → API (the secret key)." />
+                  </div>
+                  <SwitchField
+                    id="sf-auto"
+                    label="When Steadfast delivers, mark the order delivered"
+                    description="And record the cash the rider collected, and tell the customer (Settings → Customer messages)."
+                    checked={f.bool('autoDeliver')}
+                    onCheckedChange={(v) => f.set('autoDeliver', v)}
+                  />
+                  <SwitchField id="sf-items" label="Send item names with the parcel" description="The rider and the customer see what is inside." checked={f.bool('sendItems')} onCheckedChange={(v) => f.set('sendItems', v)} />
+                  <SteadfastWebhook f={f} />
+                  <SteadfastBalance />
+                </>
+              )}
+            </ServiceCard>
+          )}
+
           <MessageLog />
         </div>
       )}
@@ -287,6 +316,62 @@ function TestMode({ f, listName, what, placeholder }: { f: FormApi; listName: st
           placeholder={placeholder}
         />
       </Field>
+    </div>
+  );
+}
+
+/** Where Steadfast sends its updates, and the token both sides use (pasted there, or made there and pasted here). */
+function SteadfastWebhook({ f }: { f: FormApi }) {
+  const url = `${API_URL || window.location.origin}/v1/webhooks/steadfast`;
+  const token = f.str('webhookToken');
+  const copy = (text: string, what: string) => navigator.clipboard.writeText(text).then(() => toast.success(`${what} copied`), () => toast.error('Could not copy'));
+  const make = () => {
+    if (token && !confirm('Make a new token? Then save, and paste it in the Steadfast portal too: the old one stops working.')) return;
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    f.set('webhookToken', btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''));
+  };
+  return (
+    <div className="space-y-3 rounded-lg border border-zinc-200 bg-zinc-50/70 p-3">
+      <p className="text-sm font-medium text-zinc-900">Status updates (webhook)</p>
+      <p className="text-sm text-zinc-500">
+        In the Steadfast portal → Webhook: put this address as the <strong>Callback URL</strong>, and the same <strong>Auth token</strong> here and there. Updates are checked with
+        it (Bearer token and signature), so nobody else can change your orders.
+      </p>
+      <Field label="Callback URL" htmlFor="sf-url" hint="Steadfast needs https: the live API address.">
+        <div className="flex items-center gap-2">
+          <code id="sf-url" className="min-w-0 flex-1 truncate rounded-md bg-white px-2.5 py-2 text-xs ring-1 ring-zinc-200">{url}</code>
+          <Button type="button" variant="outline" size="sm" onClick={() => copy(url, 'Address')} aria-label="Copy the address">
+            <Copy />
+          </Button>
+        </div>
+      </Field>
+      <Field label="Auth token" htmlFor="sf-token" error={f.errors.webhookToken} hint="Paste the one Steadfast made (Generate), or make one here. Then Save.">
+        <div className="flex items-center gap-2">
+          <Input id="sf-token" value={token} onChange={(e) => f.set('webhookToken', e.target.value.trim())} className="font-mono text-xs" autoComplete="off" invalid={!!f.errors.webhookToken} />
+          <Button type="button" variant="outline" size="sm" disabled={!token} onClick={() => copy(token, 'Token')} aria-label="Copy the token">
+            <Copy />
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={make}>
+            Make one
+          </Button>
+        </div>
+      </Field>
+    </div>
+  );
+}
+
+/** Free check: money on the Steadfast account (also proves the keys work). */
+function SteadfastBalance() {
+  const balance = useSteadfastBalance();
+  const r = balance.data;
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <Button type="button" variant="outline" size="sm" loading={balance.isPending} onClick={() => balance.mutate()}>
+        Check the connection
+      </Button>
+      <span className="text-xs text-zinc-500">Free: shows the account balance, sends nothing. Save first.</span>
+      {r && (r.ok ? <span className="text-sm font-medium text-brand-700">Connected · Steadfast owes you ৳{r.balance.toLocaleString('en-US')}</span> : <span className="text-sm text-red-700">{r.message}</span>)}
+      {balance.isError && <span className="text-sm text-red-700">{errorMessage(balance.error)}</span>}
     </div>
   );
 }

@@ -418,6 +418,10 @@ export interface OrderListItem {
   items: number;
   total: number;
   paidAmount: number;
+  advanceRequired: number;
+  /** Steadfast parcel, once sent. */
+  consignmentId: string | null;
+  courierStatus: string | null;
   createdAt: string;
 }
 
@@ -481,6 +485,13 @@ export interface Order {
   advanceRequired: number;
   courier: string | null;
   trackingCode: string | null;
+  /** Steadfast: the parcel, its latest status and when. */
+  consignmentId: string | null;
+  /** Steadfast's tracking page. */
+  trackingUrl: string | null;
+  courierStatus: string | null;
+  courierStatusAt: string | null;
+  courierSentAt: string | null;
   customerNote: string | null;
   staffNote: string | null;
   confirmedAt: string | null;
@@ -684,7 +695,7 @@ export interface Banner {
   state: BannerState;
 }
 
-export type IntegrationKey = 'email' | 'sms' | 'google' | 'payment';
+export type IntegrationKey = 'email' | 'sms' | 'google' | 'payment' | 'steadfast';
 
 /** An outside service. Secrets are never sent back: only a hint like "re_…a3f9" (null: not saved). */
 export interface Integration {

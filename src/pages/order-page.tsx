@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
-import { ArrowLeft, Banknote, MapPin, Pencil, Phone, Printer, Truck } from 'lucide-react';
+import { ArrowLeft, Banknote, MapPin, Pencil, Phone, Printer, ExternalLink, RefreshCw, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAddOrderNote, useAddPayment, useOrder, useSetCourier, useSetOrderStatus } from '@/hooks/use-orders';
 import { ApiError, errorMessage } from '@/lib/api';
@@ -8,6 +8,7 @@ import { imageUrl } from '@/lib/store';
 import type { Order, OrderStatus, PaymentMethod } from '@/lib/types';
 import { cn, formatDateTime, formatMoney, timeAgo } from '@/lib/utils';
 import { CHANNELS, ORDER_STATUS, orderNo, OrderStatusBadge, PAYMENT_METHODS, PaymentBadge } from '@/components/orders/labels';
+import { CourierStatusBadge, SendToSteadfastDialog, useRefreshCourier, whyNotSendable } from '@/components/orders/steadfast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -467,6 +468,58 @@ function PaymentDialog({ order, onDone }: { order: Order; onDone: () => void }) 
   );
 }
 
+/** The Steadfast parcel: tracking, where it is, and a button to ask Steadfast now. */
+function SteadfastParcel({ order }: { order: Order }) {
+  const refresh = useRefreshCourier(order.id);
+  return (
+    <div className="space-y-1.5">
+      <div className="font-medium text-zinc-900">Steadfast</div>
+      <div className="text-zinc-600">
+        Tracking: <span className="font-mono select-all">{order.trackingCode ?? '—'}</span>
+      </div>
+      <div className="text-xs text-zinc-500">Consignment {order.consignmentId}</div>
+      {order.trackingUrl && (
+        <a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline">
+          Open tracking <ExternalLink className="size-3.5" />
+        </a>
+      )}
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        <CourierStatusBadge status={order.courierStatus} />
+        {order.courierStatusAt && <span className="text-xs text-zinc-500">{timeAgo(order.courierStatusAt)}</span>}
+      </div>
+      <Button
+        size="sm"
+        variant="outline"
+        loading={refresh.isPending}
+        onClick={() =>
+          refresh.mutate(undefined, {
+            onSuccess: (r) => toast.success(r.note ?? (r.changed ? 'Updated from Steadfast' : 'No change at Steadfast')),
+            onError: (err) => toast.error(errorMessage(err)),
+          })
+        }
+      >
+        <RefreshCw /> Ask Steadfast now
+      </Button>
+    </div>
+  );
+}
+
+/** Send this one order to Steadfast (when it is ready). */
+function SendOne({ order }: { order: Order }) {
+  const [open, setOpen] = useState(false);
+  if (whyNotSendable(order)) return null;
+  return (
+    <>
+      <Button size="sm" variant="outline" className="mt-1" onClick={() => setOpen(true)}>
+        <Truck /> Send to Steadfast
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        {open && <SendToSteadfastDialog orders={[order]} onDone={() => setOpen(false)} />}
+      </Dialog>
+    </>
+  );
+}
+
 function CourierCard({ order }: { order: Order }) {
   const save = useSetCourier(order.id);
   const [editing, setEditing] = useState(false);
@@ -514,6 +567,8 @@ function CourierCard({ order }: { order: Order }) {
               </Button>
             </div>
           </form>
+        ) : order.consignmentId ? (
+          <SteadfastParcel order={order} />
         ) : order.courier ? (
           <>
             <div className="font-medium text-zinc-900">{order.courier}</div>
@@ -522,6 +577,7 @@ function CourierCard({ order }: { order: Order }) {
         ) : (
           <p className="text-zinc-500">No courier yet. It is asked for when you mark the order shipped.</p>
         )}
+        {!editing && !order.consignmentId && <SendOne order={order} />}
         <dl className="space-y-1 border-t border-zinc-100 pt-2 text-xs text-zinc-500">
           {order.confirmedAt && <div>Confirmed {formatDateTime(order.confirmedAt)}</div>}
           {order.shippedAt && <div>Shipped {formatDateTime(order.shippedAt)}</div>}
