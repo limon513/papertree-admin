@@ -422,6 +422,8 @@ export interface OrderListItem {
   /** Steadfast parcel, once sent. */
   consignmentId: string | null;
   courierStatus: string | null;
+  /** The customer's saved courier record level (null: not checked). */
+  courierLevel: CourierLevel | null;
   createdAt: string;
 }
 
@@ -507,6 +509,9 @@ export interface Order {
   events: { id: number; type: string; message: string; by: string | null; createdAt: string }[];
   /** SMS and emails the customer was sent about this order, newest first. logged: test mode, not sent. */
   messages: { id: number; channel: 'sms' | 'email'; purpose: string; to: string; status: 'sent' | 'failed' | 'logged'; error: string | null; createdAt: string }[];
+  /** The customer's saved courier record (null: not checked), and whether it can be checked. */
+  courierRecord: CourierRecordView | null;
+  canCheckCourier: boolean;
   customer: {
     id: number;
     type: 'retail' | 'business';
@@ -757,4 +762,24 @@ export interface Coupon {
 
 export interface CouponDetail extends Coupon {
   recentOrders: { id: number; number: number; customerName: string; phone: string; status: OrderStatus; total: number; couponDiscount: number; createdAt: string }[];
+}
+
+/** A customer's courier record level (Steadfast, all merchants). */
+export type CourierLevel = 'good' | 'watch' | 'risky' | 'unknown';
+
+export interface CourierRecordView {
+  phone: string;
+  level: CourierLevel;
+  checkedAt: string;
+  record: {
+    deliveryRatio: number | null;
+    cancellationRatio: number | null;
+    volumeBand: string | null;
+    volumeRange: string | null;
+    deliveredCount: number | null;
+    cancelledCount: number | null;
+    totalReports: number;
+    reports: { code: string; times: number }[];
+    doubtfulReports: boolean;
+  };
 }
