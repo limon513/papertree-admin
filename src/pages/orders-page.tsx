@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog } from '@/components/ui/dialog';
 import { CourierStatusBadge, SendToSteadfastDialog } from '@/components/orders/steadfast';
+import { CourierLevelBadge } from '@/components/orders/courier-record';
 import { Input, Select } from '@/components/ui/input';
 import { EmptyState, LoadError, Skeleton } from '@/components/ui/misc';
 
@@ -205,6 +206,7 @@ export function OrdersPage() {
                       <div className="flex items-center gap-1.5 font-medium text-zinc-800">
                         {o.customerName}
                         {o.type === 'wholesale' && <Badge variant="violet">Wholesale</Badge>}
+                        <CourierLevelBadge level={o.courierLevel} />
                       </div>
                       <div className="text-xs text-zinc-500">
                         {o.phone} · {o.areaName ? `${o.areaName}, ` : ''}

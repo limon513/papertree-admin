@@ -9,6 +9,7 @@ import type { Order, OrderStatus, PaymentMethod } from '@/lib/types';
 import { cn, formatDateTime, formatMoney, timeAgo } from '@/lib/utils';
 import { CHANNELS, ORDER_STATUS, orderNo, OrderStatusBadge, PAYMENT_METHODS, PaymentBadge } from '@/components/orders/labels';
 import { CourierStatusBadge, SendToSteadfastDialog, useRefreshCourier, whyNotSendable } from '@/components/orders/steadfast';
+import { CourierRecordCard } from '@/components/orders/courier-record';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -200,6 +201,7 @@ export function OrderPage() {
         </div>
 
         <div className="space-y-6">
+          <CourierRecordCard order={o} />
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Payment</CardTitle>
