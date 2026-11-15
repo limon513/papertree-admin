@@ -20,10 +20,10 @@ export const STORE_PATHS = {
 export const iconUrl = (key: string) => `${API_URL}/icons/${key}.svg`;
 
 /** The smallest saved width that is at least `minWidth` wide (or the largest there is). */
-export function imageUrl(image: Media, minWidth: number) {
+export function imageUrl(image: Pick<Media, 'urls'> & { url?: string }, minWidth: number) {
   const widths = Object.keys(image.urls)
     .map(Number)
     .sort((a, b) => a - b);
   const width = widths.find((w) => w >= minWidth) ?? widths[widths.length - 1];
-  return width === undefined ? image.url : (image.urls[String(width)] ?? image.url);
+  return width === undefined ? (image.url ?? '') : (image.urls[String(width)] ?? image.url ?? '');
 }
