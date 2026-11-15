@@ -15,6 +15,7 @@ import {
   Settings,
   ShieldCheck,
   ShoppingCart,
+  Star,
   Tag, Tags,
   UserCog,
   Users,
@@ -77,6 +78,14 @@ export const NAV: NavGroup[] = [
         module: 'products',
         ready: true,
         description: 'Badges like Overseas on the website, with a filter',
+      },
+      {
+        label: 'Reviews',
+        to: '/reviews',
+        icon: Star,
+        module: 'products',
+        ready: true,
+        description: 'Approve customer ratings and reviews, and reply',
       },
       {
         label: 'Product Imports',
