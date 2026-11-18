@@ -134,18 +134,31 @@ export function IntegrationsPage() {
             integration={byKey('payment')!}
             icon={<CreditCard />}
             title="Online payment (SSLCommerz)"
-            intro="bKash, Nagad and cards at checkout. Payment is not switched on in the shop yet: the details can be saved now."
+            intro="bKash, Nagad, Rocket, cards and internet banking at checkout. Shoppers pay on SSLCommerz’s page and come back to their order; each payment is checked with SSLCommerz before it counts."
           >
             {(f) => (
               <>
-                <SwitchField id="pay-enabled" label="Offer online payment at checkout" description="Coming soon in the shop: saving this has no effect yet." checked={f.bool('enabled')} onCheckedChange={(v) => f.set('enabled', v)} />
-                <SwitchField id="pay-sandbox" label="Sandbox (test payments, no real money)" checked={f.bool('sandbox')} onCheckedChange={(v) => f.set('sandbox', v)} />
+                <SwitchField
+                  id="pay-enabled"
+                  label="Offer online payment at checkout"
+                  description="Shoppers can choose “Pay online now” next to cash on delivery."
+                  checked={f.bool('enabled')}
+                  onCheckedChange={(v) => f.set('enabled', v)}
+                />
+                <SwitchField
+                  id="pay-sandbox"
+                  label="Sandbox (test payments, no real money)"
+                  description="Turn off only with the live Store ID and password from SSLCommerz."
+                  checked={f.bool('sandbox')}
+                  onCheckedChange={(v) => f.set('sandbox', v)}
+                />
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Store ID" htmlFor="pay-store">
-                    <Input id="pay-store" value={f.str('storeId')} onChange={(e) => f.set('storeId', e.target.value)} />
+                    <Input id="pay-store" value={f.str('storeId')} onChange={(e) => f.set('storeId', e.target.value.trim())} />
                   </Field>
-                  <SecretField f={f} name="storePassword" label="Store password" hint="From SSLCommerz with your Store ID." />
+                  <SecretField f={f} name="storePassword" label="Store password (API)" hint="The “Store Password (API/Secret Key)” from SSLCommerz, not the panel login password. In the sandbox it often ends with @ssl." />
                 </div>
+                <PaymentIpn />
               </>
             )}
           </ServiceCard>
@@ -315,6 +328,29 @@ function TestMode({ f, listName, what, placeholder }: { f: FormApi; listName: st
           }}
           placeholder={placeholder}
         />
+      </Field>
+    </div>
+  );
+}
+
+/** The IPN address for the SSLCommerz panel (it is also sent with every payment). */
+function PaymentIpn() {
+  const url = `${API_URL || window.location.origin}/v1/webhooks/sslcommerz/ipn`;
+  const copy = () => navigator.clipboard.writeText(url).then(() => toast.success('Address copied'), () => toast.error('Could not copy'));
+  return (
+    <div className="space-y-3 rounded-lg border border-zinc-200 bg-zinc-50/70 p-3">
+      <p className="text-sm font-medium text-zinc-900">Payment notifications (IPN)</p>
+      <p className="text-sm text-zinc-500">
+        SSLCommerz tells the shop about each payment here, even when the shopper closes the page before coming back. It is sent with every payment; to be safe, also put it in the
+        SSLCommerz panel (My Stores → IPN Settings). Every notification is checked with SSLCommerz before a payment counts.
+      </p>
+      <Field label="IPN URL" htmlFor="pay-ipn" hint="Must be the live https API address.">
+        <div className="flex items-center gap-2">
+          <code id="pay-ipn" className="min-w-0 flex-1 truncate rounded-md bg-white px-2.5 py-2 text-xs ring-1 ring-zinc-200">{url}</code>
+          <Button type="button" variant="outline" size="sm" onClick={copy} aria-label="Copy the address">
+            <Copy />
+          </Button>
+        </div>
       </Field>
     </div>
   );
