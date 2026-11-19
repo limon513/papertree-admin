@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
-import { AlertTriangle, Copy, CreditCard, KeyRound, Mail, MessageSquare, Send, Truck } from 'lucide-react';
+import { AlertTriangle, BellRing, Copy, CreditCard, KeyRound, Mail, MessageSquare, Send, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useIntegrations, useMessages, useSaveIntegration, useSmsBalance, useSteadfastBalance, useTestIntegration } from '@/hooks/use-integrations';
 import { API_URL, ApiError, errorMessage } from '@/lib/api';
@@ -192,6 +192,39 @@ export function IntegrationsPage() {
             </ServiceCard>
           )}
 
+          {byKey('push') && (
+            <>
+              <ServiceCard
+                integration={byKey('push')!}
+                icon={<BellRing />}
+                title="Push notifications (Firebase)"
+                intro="Free alerts on customers' phones and computers, only where they turned alerts on: order updates now; offers and saved items next. Uses the Firebase web settings of Google sign-in above, plus these."
+              >
+                {(f) => (
+                  <>
+                    <SwitchField id="push-enabled" label="Send push notifications" checked={f.bool('enabled')} onCheckedChange={(v) => f.set('enabled', v)} />
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label="Sender ID" htmlFor="push-sender" hint="Firebase → Project settings → Cloud Messaging.">
+                        <Input id="push-sender" value={f.str('senderId')} onChange={(e) => f.set('senderId', e.target.value.trim())} inputMode="numeric" />
+                      </Field>
+                      <Field label="Web Push key" htmlFor="push-vapid" hint="Cloud Messaging → Web Push certificates → Key pair.">
+                        <Input id="push-vapid" value={f.str('vapidKey')} onChange={(e) => f.set('vapidKey', e.target.value.trim())} className="font-mono text-xs" />
+                      </Field>
+                    </div>
+                    <SecretField
+                      f={f}
+                      name="serviceAccount"
+                      label="Service account key"
+                      hint="Firebase → Project settings → Service accounts → Generate new private key. Open the file and paste all of it here."
+                    />
+                    <TestMode f={f} listName="testPhones" what="push" placeholder="01712345678, 01812345678" />
+                  </>
+                )}
+              </ServiceCard>
+              <TestBox channel="push" />
+            </>
+          )}
+
           <MessageLog />
         </div>
       )}
@@ -314,11 +347,11 @@ function TestMode({ f, listName, what, placeholder }: { f: FormApi; listName: st
       <SwitchField
         id={`${listName}-mode`}
         label="Test mode"
-        description={`${what === 'SMS' ? 'SMS go' : 'Emails go'} only to the test list below; the rest are only written to “Sent messages”. Switch it off at launch. (On a developer's computer it is always on.)`}
+        description={`${what === 'SMS' ? 'SMS go' : what === 'push' ? 'Alerts go only to customers with the phone numbers below' : 'Emails go'}${what === 'push' ? '' : ' only to the test list below'}; the rest are only written to “Sent messages”. Switch it off at launch. (On a developer's computer it is always on.)`}
         checked={f.bool('testMode')}
         onCheckedChange={(v) => f.set('testMode', v)}
       />
-      <Field label={what === 'SMS' ? 'Test numbers' : 'Test addresses'} htmlFor={`${listName}-list`} error={f.errors[listName] ?? Object.entries(f.errors).find(([k]) => k.startsWith(`${listName}.`))?.[1]} hint="Separated by commas. Up to 10.">
+      <Field label={what === 'SMS' || what === 'push' ? 'Test numbers' : 'Test addresses'} htmlFor={`${listName}-list`} error={f.errors[listName] ?? Object.entries(f.errors).find(([k]) => k.startsWith(`${listName}.`))?.[1]} hint="Separated by commas. Up to 10.">
         <Input
           id={`${listName}-list`}
           value={text}
@@ -428,7 +461,7 @@ function SmsBalance() {
   );
 }
 
-function TestBox({ channel }: { channel: 'email' | 'sms' }) {
+function TestBox({ channel }: { channel: 'email' | 'sms' | 'push' }) {
   const test = useTestIntegration();
   const [to, setTo] = useState('');
   const result = test.data;
@@ -440,14 +473,14 @@ function TestBox({ channel }: { channel: 'email' | 'sms' }) {
         test.mutate({ key: channel, to }, { onError: (err) => toast.error(errorMessage(err)) });
       }}
     >
-      <span className="text-sm font-medium text-zinc-700">Send a test {channel === 'email' ? 'email' : 'SMS'} to</span>
+      <span className="text-sm font-medium text-zinc-700">{channel === 'push' ? 'Send a test alert to the devices of' : `Send a test ${channel === 'email' ? 'email' : 'SMS'} to`}</span>
       <Input value={to} onChange={(e) => setTo(e.target.value)} placeholder={channel === 'email' ? 'you@example.com' : '01712345678'} className="h-9 sm:w-64" aria-label={`Test ${channel} to`} />
       <Button type="submit" size="sm" variant="outline" loading={test.isPending} disabled={to.trim().length < 3}>
         <Send /> Send test
       </Button>
       {result && (
         <span className={cn('text-sm', result.status === 'failed' ? 'text-red-700' : 'text-brand-700')} role="status">
-          {result.status === 'sent' ? (channel === 'sms' ? 'Sent. Check the phone.' : 'Sent. Check the inbox.') : result.status === 'logged' ? `Not sent: ${result.error ?? 'test mode'}. Written to Sent messages.` : `Not sent: ${result.error}`}
+          {result.status === 'sent' ? (channel === 'push' ? `Sent to ${result.sent ?? 1} device${result.sent === 1 ? '' : 's'}. Check the phone.` : channel === 'sms' ? 'Sent. Check the phone.' : 'Sent. Check the inbox.') : result.status === 'logged' ? `Not sent: ${result.error ?? 'test mode'}. Written to Sent messages.` : `Not sent: ${result.error}`}
         </span>
       )}
     </form>
@@ -463,7 +496,7 @@ const STATUS: Record<MessageLogEntry['status'], { label: string; badge: BadgePro
 };
 
 function MessageLog() {
-  const [channel, setChannel] = useState<'all' | 'email' | 'sms'>('all');
+  const [channel, setChannel] = useState<'all' | 'email' | 'sms' | 'push'>('all');
   const [page, setPage] = useState(1);
   const list = useMessages(channel, page);
   const pages = list.data ? Math.max(1, Math.ceil(list.data.total / list.data.pageSize)) : 1;
@@ -475,7 +508,7 @@ function MessageLog() {
           <p className="text-sm text-zinc-500">Every email and SMS the shop sent, or in test mode would have sent. Sign-in codes show here until SMS is connected.</p>
         </div>
         <div className="flex rounded-lg bg-zinc-200/60 p-0.5" role="group" aria-label="Show">
-          {(['all', 'email', 'sms'] as const).map((c) => (
+          {(['all', 'email', 'sms', 'push'] as const).map((c) => (
             <button
               key={c}
               type="button"
@@ -483,7 +516,7 @@ function MessageLog() {
               aria-pressed={channel === c}
               className={cn('cursor-pointer rounded-md px-3 py-1 text-sm font-medium', channel === c ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-600 hover:text-zinc-900')}
             >
-              {c === 'all' ? 'All' : c === 'email' ? 'Email' : 'SMS'}
+              {c === 'all' ? 'All' : c === 'email' ? 'Email' : c === 'push' ? 'Push' : 'SMS'}
             </button>
           ))}
         </div>
@@ -507,7 +540,7 @@ function MessageLog() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-zinc-900">
-                  {m.channel === 'email' ? 'Email' : 'SMS'} to {m.to}
+                  {m.channel === 'email' ? 'Email' : m.channel === 'push' ? 'Push' : 'SMS'} to {m.to}
                   {m.subject && <span className="font-normal text-zinc-600"> · {m.subject}</span>}
                 </p>
                 <p className="line-clamp-2 text-zinc-600">{m.body}</p>
