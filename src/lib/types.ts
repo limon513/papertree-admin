@@ -345,7 +345,7 @@ export type ProductBulk = { mode: 'off' } | { mode: 'own'; tiers: BulkTier[] } |
 export const MESSAGE_EVENTS = ['placed', 'confirmed', 'shipped', 'delivered', 'cancelled'] as const;
 export type MessageEvent = (typeof MESSAGE_EVENTS)[number];
 /** Which messages a customer gets about their order, by SMS and by email. */
-export type MessagesSettings = Record<MessageEvent | 'businessApproved', { sms: boolean; email: boolean }>;
+export type MessagesSettings = Record<MessageEvent | 'businessApproved', { sms: boolean; email: boolean; push: boolean }>;
 
 export interface SettingsResponse {
   store: StoreSettings;
@@ -700,7 +700,7 @@ export interface Banner {
   state: BannerState;
 }
 
-export type IntegrationKey = 'email' | 'sms' | 'google' | 'payment' | 'steadfast';
+export type IntegrationKey = 'email' | 'sms' | 'google' | 'payment' | 'steadfast' | 'push';
 
 /** An outside service. Secrets are never sent back: only a hint like "re_…a3f9" (null: not saved). */
 export interface Integration {
@@ -714,7 +714,7 @@ export interface Integration {
 
 export interface MessageLogEntry {
   id: number;
-  channel: 'email' | 'sms';
+  channel: 'email' | 'sms' | 'push';
   to: string;
   subject: string | null;
   body: string;

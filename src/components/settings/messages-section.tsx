@@ -30,7 +30,7 @@ export function MessagesSection({ data }: { data: SettingsResponse }) {
   const onPath = (events: MessageEvent[]) => events.filter((e) => form[e].sms).length;
   const smsCount = Math.max(onPath(['placed', 'confirmed', 'shipped', 'delivered']), onPath(['placed', 'confirmed', 'cancelled']));
 
-  const set = (event: Row, channel: 'sms' | 'email', on: boolean) => setForm({ ...form, [event]: { ...form[event], [channel]: on } });
+  const set = (event: Row, channel: 'sms' | 'email' | 'push', on: boolean) => setForm({ ...form, [event]: { ...form[event], [channel]: on } });
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -51,22 +51,23 @@ export function MessagesSection({ data }: { data: SettingsResponse }) {
             description={
               <>
                 What customers hear as their order moves on. Each message goes once per order, about a minute after you change the status, so a wrong
-                click can be undone first. Email goes only to customers who gave an email address.{' '}
+                click can be undone first. Email goes only to customers who gave an email address; push notifications (free) only to devices where the customer turned alerts on, and only if they keep order alerts on.{' '}
                 <span className="block mt-2">
-                  The SMS and email accounts are set in <Link to="/integrations" className="font-medium text-brand-700 hover:underline">Integrations</Link>.
+                  The SMS, email and push accounts are set in <Link to="/integrations" className="font-medium text-brand-700 hover:underline">Integrations</Link>.
                 </span>
               </>
             }
           >
             <div className="overflow-hidden rounded-lg ring-1 ring-zinc-200">
-              <div className="grid grid-cols-[minmax(0,1fr)_64px_64px] items-center gap-2 bg-zinc-50 px-4 py-2 text-xs font-medium text-zinc-500 uppercase">
+              <div className="grid grid-cols-[minmax(0,1fr)_56px_56px_56px] items-center gap-2 bg-zinc-50 px-4 py-2 text-xs font-medium text-zinc-500 uppercase">
                 <span>When</span>
                 <span className="text-center">SMS</span>
                 <span className="text-center">Email</span>
+                <span className="text-center">Push</span>
               </div>
               {ROWS.map((event) => (
                 <div key={event} className="border-t border-zinc-200 px-4 py-3">
-                  <div className="grid grid-cols-[minmax(0,1fr)_64px_64px] items-center gap-2">
+                  <div className="grid grid-cols-[minmax(0,1fr)_56px_56px_56px] items-center gap-2">
                     <span className="text-sm">
                       <span className="font-medium text-zinc-800">{EVENTS[event].label}</span>
                       <span className="block text-zinc-500">{EVENTS[event].when}</span>
@@ -76,6 +77,9 @@ export function MessagesSection({ data }: { data: SettingsResponse }) {
                     </span>
                     <span className="flex justify-center">
                       <Switch checked={form[event].email} onCheckedChange={(v) => set(event, 'email', v)} aria-label={`${EVENTS[event].label}: email`} />
+                    </span>
+                    <span className="flex justify-center">
+                      <Switch checked={form[event].push ?? false} onCheckedChange={(v) => set(event, 'push', v)} aria-label={`${EVENTS[event].label}: push notification`} />
                     </span>
                   </div>
                   {form[event].sms && samples.data && (

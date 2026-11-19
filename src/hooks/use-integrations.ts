@@ -18,7 +18,7 @@ export function useSaveIntegration() {
 export function useTestIntegration() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ key, to }: { key: 'email' | 'sms'; to: string }) => api<MessageLogEntry>(`/v1/admin/integrations/${key}/test`, { method: 'POST', body: { to } }),
+    mutationFn: ({ key, to }: { key: 'email' | 'sms' | 'push'; to: string }) => api<MessageLogEntry & { sent?: number; devices?: number }>(`/v1/admin/integrations/${key}/test`, { method: 'POST', body: { to } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [...KEY, 'messages'] }),
   });
 }
@@ -31,7 +31,7 @@ export const useSteadfastBalance = () =>
 export const useSmsBalance = () =>
   useMutation({ mutationFn: () => api<{ ok: true; balance: string } | { ok: false; message: string }>('/v1/admin/integrations/sms/balance', { method: 'POST', body: {} }) });
 
-export const useMessages = (channel: 'all' | 'email' | 'sms', page: number) =>
+export const useMessages = (channel: 'all' | 'email' | 'sms' | 'push', page: number) =>
   useQuery({
     queryKey: [...KEY, 'messages', channel, page],
     queryFn: () => api<{ items: MessageLogEntry[]; total: number; page: number; pageSize: number }>(`/v1/admin/integrations/messages?channel=${channel}&page=${page}`),
