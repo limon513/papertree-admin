@@ -937,6 +937,8 @@ export interface Quotation {
   /** The newer version (when replaced), and the one this replaces. */
   replacedBy: { id: number; number: string } | null;
   replaces: { id: number; number: string } | null;
+  /** The custom order request this quotation answers. */
+  customRequestId: number | null;
   /** SMS and emails it was sent with. */
   messages: { id: number; channel: 'sms' | 'email'; to: string; status: 'sent' | 'logged' | 'failed'; error: string | null; createdAt: string }[];
   /** The quotation's page on the website. */
@@ -957,4 +959,37 @@ export interface Quotation {
     bulkDiscount: number;
   }[];
   order: { id: number; number: number } | null;
+}
+
+// ---- Custom orders ----
+
+export type CustomRequestStatus = 'new' | 'quoted' | 'closed';
+export interface CustomRequest {
+  id: number;
+  /** "CR-1001" */
+  number: string;
+  kind: string;
+  kindName: string;
+  specs: { label: string; value: string }[];
+  quantity: number;
+  notes: string | null;
+  name: string;
+  phone: string;
+  email: string | null;
+  city: string | null;
+  customerId: number | null;
+  status: CustomRequestStatus;
+  staffNote: string | null;
+  handledByName: string | null;
+  handledAt: string | null;
+  createdAt: string;
+  files: { id: number; fileName: string; contentType: string; size: number; url: string }[];
+  quotations: { id: number; number: string; status: QuotationStatus; subtotal: number }[];
+}
+export interface CustomRequestList {
+  items: CustomRequest[];
+  total: number;
+  page: number;
+  pageSize: number;
+  counts: Record<CustomRequestStatus, number>;
 }

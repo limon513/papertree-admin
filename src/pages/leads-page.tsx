@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { Check, ChevronLeft, ChevronRight, Handshake, Inbox, MessageCircle, Phone, RotateCcw, Search, UserRound } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Hammer, Handshake, Inbox, MessageCircle, Phone, RotateCcw, Search, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { canOpen, useMe } from '@/hooks/use-auth';
 import { useProductRequests, useUpdateProductRequest } from '@/hooks/use-search';
 import { useSupplierLeads } from '@/hooks/use-supplier-leads';
 import { SupplierLeadsPanel } from '@/components/leads/supplier-leads';
+import { CustomRequestsPanel } from '@/components/leads/custom-requests';
+import { useCustomRequests } from '@/hooks/use-custom-requests';
 import { errorMessage } from '@/lib/api';
 import type { ProductRequest } from '@/lib/types';
 import { cn, formatDateTime, timeAgo } from '@/lib/utils';
@@ -27,24 +29,28 @@ type View = (typeof VIEWS)[number]['key'];
 
 const TABS = [
   { key: 'requests', label: 'Product requests', Icon: Inbox },
+  { key: 'custom', label: 'Custom orders', Icon: Hammer },
   { key: 'suppliers', label: 'Sell with us', Icon: Handshake },
 ] as const;
 
 /** Requests & Leads: "Request this product" and "Sell with us" from the website, each on its own tab. */
 export function LeadsPage() {
   const [params, setParams] = useSearchParams();
-  const tab = params.get('tab') === 'suppliers' ? 'suppliers' : 'requests';
+  const tab = params.get('tab') === 'suppliers' ? 'suppliers' : params.get('tab') === 'custom' ? 'custom' : 'requests';
   // New ones on each tab (the same lists the tabs show first, so no extra loading).
   const requests = useProductRequests('new', 1);
   const suppliers = useSupplierLeads('new', 1);
-  const waiting = { requests: requests.data?.counts.new ?? 0, suppliers: suppliers.data?.counts.new ?? 0 };
+  const custom = useCustomRequests('new', 1);
+  const waiting = { requests: requests.data?.counts.new ?? 0, custom: custom.data?.counts.new ?? 0, suppliers: suppliers.data?.counts.new ?? 0 };
 
   return (
     <div>
       <PageHeader
         title="Requests & Leads"
         description={
-          tab === 'suppliers'
+          tab === 'custom'
+            ? 'Things customers want made (Custom Order Studio on the website). Call them, make a quotation with the custom item, then close the request.'
+            : tab === 'suppliers'
             ? 'Brands and suppliers who want to sell through the shop (“Sell with us” on the website). Talk to them, then mark the lead done.'
             : 'Products shoppers asked for on the website when their search found nothing. Call them back, then mark the request done.'
         }
@@ -56,7 +62,7 @@ export function LeadsPage() {
             type="button"
             role="tab"
             aria-selected={tab === key}
-            onClick={() => setParams(key === 'suppliers' ? { tab: 'suppliers' } : {})}
+            onClick={() => setParams(key === 'requests' ? {} : { tab: key })}
             className={cn(
               '-mb-px flex cursor-pointer items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
               tab === key ? 'border-brand-600 text-brand-800' : 'border-transparent text-zinc-500 hover:text-zinc-800',
@@ -67,7 +73,7 @@ export function LeadsPage() {
           </button>
         ))}
       </div>
-      {tab === 'suppliers' ? <SupplierLeadsPanel /> : <ProductRequestsPanel />}
+      {tab === 'suppliers' ? <SupplierLeadsPanel /> : tab === 'custom' ? <CustomRequestsPanel /> : <ProductRequestsPanel />}
     </div>
   );
 }

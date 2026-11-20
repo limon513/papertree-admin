@@ -34,7 +34,9 @@ export interface StaffQuotationInput {
   validDays: number;
   /** Fixed delivery (0 = free); null = worked out when the customer orders. */
   deliveryFee: number | null;
-  items: { variantId: number; quantity: number; unitPrice?: number; bulk?: boolean }[];
+  items: ({ variantId: number; quantity: number; unitPrice?: number; bulk?: boolean } | { custom: { name: string; details: string | null }; quantity: number; unitPrice: number })[];
+  /** The custom order request this answers. */
+  customRequestId: number | null;
 }
 
 /** A new quotation by staff, or (with `revise`) a new version of one. */
