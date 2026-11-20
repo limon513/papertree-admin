@@ -255,6 +255,32 @@ export const router = createBrowserRouter([
             },
           },
           {
+            path: 'quotations',
+            lazy: async () => {
+              const { QuotationsPage } = await import('@/pages/quotations-page');
+              return {
+                Component: () => (
+                  <RequireModule module="orders">
+                    <QuotationsPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
+            path: 'quotations/:id',
+            lazy: async () => {
+              const { QuotationPage } = await import('@/pages/quotation-page');
+              return {
+                Component: () => (
+                  <RequireModule module="orders">
+                    <QuotationPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
             path: 'customers',
             lazy: async () => {
               const { CustomersPage } = await import('@/pages/customers-page');

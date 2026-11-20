@@ -877,3 +877,74 @@ export interface SupplierLeadList {
   pageSize: number;
   counts: Record<SupplierLeadStatus, number>;
 }
+
+// ---- Quotations ----
+
+/** expired: still open, but past its date (cannot be ordered). */
+export type QuotationStatus = 'open' | 'expired' | 'ordered' | 'cancelled';
+
+export interface QuotationListItem {
+  id: number;
+  /** "Q-1001" */
+  number: string;
+  source: 'website' | 'staff';
+  type: OrderType;
+  status: QuotationStatus;
+  name: string;
+  organisation: string | null;
+  phone: string;
+  subtotal: number;
+  /** Pieces in total. */
+  items: number;
+  validUntil: string;
+  createdAt: string;
+  orderId: number | null;
+  orderNumber: number | null;
+}
+
+export interface QuotationList {
+  items: QuotationListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  counts: Record<QuotationStatus, number>;
+}
+
+export interface Quotation {
+  id: number;
+  number: string;
+  source: 'website' | 'staff';
+  type: OrderType;
+  status: QuotationStatus;
+  customerId: number | null;
+  name: string;
+  organisation: string | null;
+  phone: string;
+  email: string | null;
+  note: string | null;
+  subtotal: number;
+  bulkDiscount: number;
+  validUntil: string;
+  createdAt: string;
+  orderedAt: string | null;
+  cancelledAt: string | null;
+  createdByName: string | null;
+  /** The quotation's page on the website. */
+  link: string;
+  items: {
+    id: number;
+    productId: number | null;
+    variantId: number | null;
+    name: string;
+    variantLabel: string | null;
+    sku: string | null;
+    image: Media | null;
+    regularPrice: number;
+    unitPrice: number;
+    quantity: number;
+    lineTotal: number;
+    bulkPercent: number | null;
+    bulkDiscount: number;
+  }[];
+  order: { id: number; number: number } | null;
+}
