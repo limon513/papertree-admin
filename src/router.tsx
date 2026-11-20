@@ -320,6 +320,19 @@ export const router = createBrowserRouter([
             },
           },
           {
+            path: 'push',
+            lazy: async () => {
+              const { PushPage } = await import('@/pages/push-page');
+              return {
+                Component: () => (
+                  <RequireModule module="marketing">
+                    <PushPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
             path: 'marketing',
             lazy: async () => {
               const { MarketingPage } = await import('@/pages/marketing-page');
