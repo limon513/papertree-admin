@@ -880,8 +880,8 @@ export interface SupplierLeadList {
 
 // ---- Quotations ----
 
-/** expired: still open, but past its date (cannot be ordered). */
-export type QuotationStatus = 'open' | 'expired' | 'ordered' | 'cancelled';
+/** expired: still open, but past its date (cannot be ordered). replaced: staff made a newer version. */
+export type QuotationStatus = 'open' | 'expired' | 'ordered' | 'cancelled' | 'replaced';
 
 export interface QuotationListItem {
   id: number;
@@ -929,6 +929,16 @@ export interface Quotation {
   orderedAt: string | null;
   cancelledAt: string | null;
   createdByName: string | null;
+  /** Fixed by staff (0 = free); null: worked out when ordering. */
+  deliveryFee: number | null;
+  terms: string | null;
+  sentAt: string | null;
+  timesSent: number;
+  /** The newer version (when replaced), and the one this replaces. */
+  replacedBy: { id: number; number: string } | null;
+  replaces: { id: number; number: string } | null;
+  /** SMS and emails it was sent with. */
+  messages: { id: number; channel: 'sms' | 'email'; to: string; status: 'sent' | 'logged' | 'failed'; error: string | null; createdAt: string }[];
   /** The quotation's page on the website. */
   link: string;
   items: {

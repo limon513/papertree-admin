@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { ChevronLeft, ChevronRight, FileText, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, Plus, Search } from 'lucide-react';
 import { useQuotations } from '@/hooks/use-quotations';
 import { errorMessage } from '@/lib/api';
 import type { QuotationStatus } from '@/lib/types';
@@ -19,6 +19,7 @@ const TABS: { key: QuotationStatus | 'all'; label: string }[] = [
   { key: 'ordered', label: 'Ordered' },
   { key: 'expired', label: 'Expired' },
   { key: 'cancelled', label: 'Cancelled' },
+  { key: 'replaced', label: 'Replaced' },
 ];
 
 export const QUOTE_STATUS: Record<QuotationStatus, { label: string; badge: 'green' | 'blue' | 'amber' | 'gray' }> = {
@@ -26,6 +27,7 @@ export const QUOTE_STATUS: Record<QuotationStatus, { label: string; badge: 'gree
   ordered: { label: 'Ordered', badge: 'green' },
   expired: { label: 'Expired', badge: 'amber' },
   cancelled: { label: 'Cancelled', badge: 'gray' },
+  replaced: { label: 'Replaced', badge: 'gray' },
 };
 
 /** Quotations: made by shoppers from their cart (and later by staff). Who asked, for how much, and what came of it. */
@@ -56,7 +58,17 @@ export function QuotationsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Quotations" description="Priced lists customers made from their cart, to print or share. They can order them online at those prices while valid (7 days)." />
+      <PageHeader
+        title="Quotations"
+        description="Priced lists for schools, offices and shops: made by customers from their cart, or by you with special prices. Customers order them online at those prices while valid."
+        actions={
+          <Button asChild>
+            <Link to="/quotations/new">
+              <Plus /> New quotation
+            </Link>
+          </Button>
+        }
+      />
       <Card className="overflow-hidden">
         <div className="flex gap-1 overflow-x-auto border-b border-zinc-200 px-3 pt-2">
           {TABS.map((t) => {
@@ -93,7 +105,7 @@ export function QuotationsPage() {
             <Skeleton className="h-12" />
           </div>
         ) : !data?.items.length ? (
-          <EmptyState icon={<FileText />} title="No quotations here" description="When customers press “Get a quotation” in their cart, the quotations show up here." />
+          <EmptyState icon={<FileText />} title="No quotations here" description="When customers press “Get a quotation” in their cart, or you make one, it shows up here." />
         ) : (
           <div className={cn('overflow-x-auto', list.isPlaceholderData && 'opacity-60')}>
             <table className="w-full text-sm">

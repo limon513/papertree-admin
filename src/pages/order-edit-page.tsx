@@ -16,7 +16,7 @@ import { Field } from '@/components/ui/field';
 import { AddonInput, Input, Select, Textarea } from '@/components/ui/input';
 import { ErrorAlert, LoadError, Skeleton, Spinner } from '@/components/ui/misc';
 
-interface Line {
+export interface Line {
   variantId: number;
   name: string;
   variantLabel: string | null;
@@ -38,12 +38,12 @@ interface Line {
   allowBackorder: boolean;
 }
 
-const listPrice = (line: Pick<Line, 'retailPrice' | 'wholesalePrice'>, type: OrderType) =>
+export const listPrice = (line: Pick<Line, 'retailPrice' | 'wholesalePrice'>, type: OrderType) =>
   type === 'wholesale' ? (line.wholesalePrice ?? line.retailPrice) : line.retailPrice;
 
-const num = (text: string) => (text.trim() === '' ? Number.NaN : Number(text));
+export const num = (text: string) => (text.trim() === '' ? Number.NaN : Number(text));
 
-function fromVariant(v: OrderVariant, type: OrderType): Line {
+export function fromVariant(v: OrderVariant, type: OrderType): Line {
   const line = {
     variantId: v.variantId,
     name: v.name,
@@ -656,7 +656,7 @@ function OrderForm({ order }: { order: Order | null }) {
 }
 
 /** Search box with results; Enter or click adds the product. */
-function ProductPicker({ onPick, type }: { onPick: (v: OrderVariant) => void; type: OrderType }) {
+export function ProductPicker({ onPick, type }: { onPick: (v: OrderVariant) => void; type: OrderType }) {
   const [text, setText] = useState('');
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
