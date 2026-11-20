@@ -118,6 +118,14 @@ export const NAV: NavGroup[] = [
         description: 'Take phone and Facebook orders, ship them and record payments',
       },
       {
+        label: 'Quotations',
+        to: '/quotations',
+        icon: FileText,
+        module: 'orders',
+        ready: true,
+        description: 'Priced lists customers made for schools, offices and shops',
+      },
+      {
         label: 'Customers',
         to: '/customers',
         icon: Users,
