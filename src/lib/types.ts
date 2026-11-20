@@ -651,6 +651,8 @@ export interface CustomerListItem {
   spent: number;
   due: number;
   lastOrderAt: string | null;
+  /** Last visit to the website while signed in. */
+  lastSeenAt: string | null;
 }
 
 export interface CustomerList {

@@ -27,6 +27,7 @@ const SORTS: { key: CustomerSort; label: string }[] = [
   { key: 'spent', label: 'Spent most' },
   { key: 'orders', label: 'Most orders' },
   { key: 'name', label: 'Name A–Z' },
+  { key: 'last_seen', label: 'Last seen on the website' },
 ];
 
 export function CustomersPage() {
@@ -149,7 +150,8 @@ export function CustomersPage() {
                   <th className="px-3 py-3 text-right">Orders</th>
                   <th className="hidden px-3 py-3 text-right sm:table-cell">Spent</th>
                   <th className="hidden px-3 py-3 text-right md:table-cell">Still owed</th>
-                  <th className="hidden px-5 py-3 lg:table-cell">Last order</th>
+                  <th className="hidden px-3 py-3 lg:table-cell">Last order</th>
+                  <th className="hidden px-5 py-3 xl:table-cell">Last seen</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -173,7 +175,8 @@ export function CustomersPage() {
                     <td className={cn('hidden px-3 py-3 text-right tabular-nums md:table-cell', c.due > 0 ? 'text-red-700' : 'text-zinc-400')}>
                       {c.due > 0 ? formatMoney(c.due) : '—'}
                     </td>
-                    <td className="hidden px-5 py-3 text-zinc-500 lg:table-cell">{c.lastOrderAt ? timeAgo(c.lastOrderAt) : 'Never'}</td>
+                    <td className="hidden px-3 py-3 text-zinc-500 lg:table-cell">{c.lastOrderAt ? timeAgo(c.lastOrderAt) : 'Never'}</td>
+                    <td className="hidden px-5 py-3 text-zinc-500 xl:table-cell">{c.lastSeenAt ? timeAgo(c.lastSeenAt) : '—'}</td>
                   </tr>
                 ))}
               </tbody>
