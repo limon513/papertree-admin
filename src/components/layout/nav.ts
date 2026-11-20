@@ -9,6 +9,7 @@ import {
   Inbox,
   LayoutDashboard,
   LayoutTemplate,
+  BellRing,
   Megaphone,
   Package,
   Plug,
@@ -138,6 +139,7 @@ export const NAV: NavGroup[] = [
     label: 'Store',
     items: [
       { label: 'Marketing', to: '/marketing', icon: Megaphone, module: 'marketing', ready: true, description: 'Coupon codes' },
+      { label: 'Push messages', to: '/push', icon: BellRing, module: 'marketing', ready: true, description: 'Offers and news on customers’ phones' },
       {
         label: 'Website Content',
         to: '/content',
