@@ -845,3 +845,35 @@ export interface CourierRecordView {
     doubtfulReports: boolean;
   };
 }
+
+// ---- "Sell with us" supplier leads ----
+
+export type SupplierLeadStatus = 'new' | 'talking' | 'done';
+/** wholesale: they supply us; brand: we list their products and order per sale; unsure. */
+export type SupplierWay = 'wholesale' | 'brand' | 'unsure';
+
+export interface SupplierLead {
+  id: number;
+  businessName: string;
+  contactName: string;
+  phone: string;
+  email: string | null;
+  location: string | null;
+  products: string;
+  ways: SupplierWay[];
+  link: string | null;
+  message: string | null;
+  status: SupplierLeadStatus;
+  staffNote: string | null;
+  handledBy: string | null;
+  handledAt: string | null;
+  createdAt: string;
+}
+
+export interface SupplierLeadList {
+  items: SupplierLead[];
+  total: number;
+  page: number;
+  pageSize: number;
+  counts: Record<SupplierLeadStatus, number>;
+}
