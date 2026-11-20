@@ -7,6 +7,7 @@ import { ApiError, errorMessage } from '@/lib/api';
 import type { Customer, CustomerAddress, WholesaleDelivery } from '@/lib/types';
 import { cn, formatDateTime, formatMoney, timeAgo } from '@/lib/utils';
 import { CustomerBadges } from '@/components/customers/customer-badges';
+import { ActivityCard, LoginAsButton } from '@/components/customers/customer-activity';
 import { AddressDialog, CustomerDialog } from '@/components/customers/customer-dialogs';
 import { orderNo, OrderStatusBadge, PaymentBadge } from '@/components/orders/labels';
 import { Button } from '@/components/ui/button';
@@ -65,6 +66,7 @@ export function CustomerPage() {
             <Button variant="outline" onClick={() => setBlocking(true)}>
               <Ban /> {c.isBlocked ? 'Unblock' : 'Block'}
             </Button>
+            <LoginAsButton customerId={c.id} name={c.name} blocked={c.isBlocked} />
             <Button asChild>
               <Link to={`/orders/new?phone=${c.phone}`}>
                 <ShoppingCart /> New order
@@ -103,6 +105,7 @@ export function CustomerPage() {
         </div>
         <div className="space-y-6">
           <BusinessCard customer={c} onEdit={() => setEditing(true)} />
+          <ActivityCard customerId={c.id} />
           {c.note && (
             <Card>
               <CardHeader>

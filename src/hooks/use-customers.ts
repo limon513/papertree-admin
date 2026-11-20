@@ -5,7 +5,7 @@ import type { BusinessStatus, Customer, CustomerList, WholesaleTerms } from '@/l
 const CUSTOMERS_KEY = ['customers'] as const;
 
 export type CustomerView = 'all' | 'retail' | 'business' | 'pending' | 'blocked';
-export type CustomerSort = 'newest' | 'last_order' | 'spent' | 'orders' | 'name';
+export type CustomerSort = 'newest' | 'last_order' | 'spent' | 'orders' | 'name' | 'last_seen';
 
 export interface CustomerFilters {
   search?: string;
