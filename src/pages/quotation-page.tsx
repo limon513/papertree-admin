@@ -81,6 +81,15 @@ export function QuotationPage() {
         <p className="mt-1 text-sm text-zinc-500">
           {formatDateTime(q.createdAt)} · {q.source === 'website' ? 'made on the website' : `made by ${q.createdByName ?? 'staff'}`} · valid until {formatDateTime(q.validUntil)}
         </p>
+        {q.customRequestId && (
+          <p className="mt-1 text-sm text-zinc-500">
+            Answers a{' '}
+            <Link to="/leads?tab=custom&view=all" className="font-medium text-brand-700 hover:underline">
+              custom order request
+            </Link>
+            .
+          </p>
+        )}
         {q.replaces && (
           <p className="mt-1 text-sm text-zinc-500">
             A new version of{' '}

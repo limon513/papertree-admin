@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { ArrowLeft, Minus, Plus, Trash2, UserCheck } from 'lucide-react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
+import { ArrowLeft, Hammer, Minus, Plus, Trash2, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { useCustomRequest } from '@/hooks/use-custom-requests';
 import { useCustomerLookup, useOrderPrices } from '@/hooks/use-orders';
 import { useQuotation, useSaveQuotation } from '@/hooks/use-quotations';
 import { ApiError, errorMessage } from '@/lib/api';
 import { imageUrl } from '@/lib/store';
-import type { OrderType, OrderVariant, Quotation } from '@/lib/types';
+import type { CustomRequest, OrderType, OrderVariant, Quotation } from '@/lib/types';
 import { cn, formatMoney } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +18,25 @@ import { ErrorAlert, LoadError, Skeleton } from '@/components/ui/misc';
 import { fromVariant, listPrice, num, ProductPicker, type Line } from './order-edit-page';
 
 type Delivery = 'order' | 'free' | 'fixed';
+/** A custom item (made to order): its name, what it is, how many, the agreed price per piece. */
+interface CustomLine {
+  key: number;
+  name: string;
+  details: string;
+  quantity: string;
+  price: string;
+}
+let nextKey = 1;
+
+/** A custom request as a first custom line: "Custom notebook: Spiral Notebook, A5", with all the answers. */
+function fromRequest(r: CustomRequest): CustomLine {
+  const short = r.specs
+    .slice(0, 2)
+    .map((s) => s.value)
+    .join(', ');
+  const details = [...r.specs.map((s) => `${s.label}: ${s.value}`), ...(r.notes ? ['', r.notes] : [])].join('\n');
+  return { key: nextKey++, name: `${r.kindName}${short ? `: ${short}` : ''}`.slice(0, 200), details, quantity: String(r.quantity), price: '' };
+}
 const DAYS = [3, 7, 14, 30, 60];
 
 /** A quotation's lines, to start a revision: the quoted prices are kept (bulk ones worked out again). */
@@ -47,6 +67,13 @@ export function QuotationEditPage() {
   const { id } = useParams();
   const reviseId = id ? Number(id) : undefined;
   const quotation = useQuotation(reviseId ?? 0, reviseId !== undefined);
+  // From a custom order request: /quotations/new?request=12
+  const requestId = Number(useSearchParams()[0].get('request')) || null;
+  const request = useCustomRequest(reviseId === undefined ? requestId : null);
+  if (requestId && reviseId === undefined) {
+    if (request.isError) return <LoadError message={errorMessage(request.error)} onRetry={() => request.refetch()} />;
+    if (request.isPending) return <Skeleton className="h-[600px]" />;
+  }
   if (reviseId !== undefined) {
     if (quotation.isError) return <LoadError message={errorMessage(quotation.error)} onRetry={() => quotation.refetch()} />;
     if (quotation.isPending) return <Skeleton className="h-[600px]" />;
@@ -61,15 +88,23 @@ export function QuotationEditPage() {
       );
     }
   }
-  return <QuotationForm key={reviseId ?? 'new'} from={reviseId !== undefined ? quotation.data! : null} />;
+  return <QuotationForm key={reviseId ?? `new-${requestId ?? ''}`} from={reviseId !== undefined ? quotation.data! : null} request={reviseId === undefined ? (request.data ?? null) : null} />;
 }
 
-function QuotationForm({ from }: { from: Quotation | null }) {
+function QuotationForm({ from, request }: { from: Quotation | null; request: CustomRequest | null }) {
   const navigate = useNavigate();
   const save = useSaveQuotation();
   const [type, setType] = useState<OrderType>(from?.type ?? 'retail');
   const [lines, setLines] = useState<Line[]>(() => (from ? fromQuotation(from) : []));
-  const [who, setWho] = useState({ phone: from?.phone ?? '', name: from?.name ?? '', organisation: from?.organisation ?? '', email: from?.email ?? '', note: from?.note ?? '' });
+  const [customs, setCustoms] = useState<CustomLine[]>(() => (request ? [fromRequest(request)] : []));
+  const customRequestId = from?.customRequestId ?? request?.id ?? null;
+  const [who, setWho] = useState({
+    phone: from?.phone ?? request?.phone ?? '',
+    name: from?.name ?? request?.name ?? '',
+    organisation: from?.organisation ?? '',
+    email: from?.email ?? request?.email ?? '',
+    note: from?.note ?? request?.number ?? '',
+  });
   const [customerId, setCustomerId] = useState<number | null>(from?.customerId ?? null);
   const [validDays, setValidDays] = useState(7);
   const [delivery, setDelivery] = useState<Delivery>(from ? (from.deliveryFee === null ? 'order' : from.deliveryFee === 0 ? 'free' : 'fixed') : 'order');
@@ -104,7 +139,9 @@ function QuotationForm({ from }: { from: Quotation | null }) {
   const prices = useOrderPrices({ type, items: priceable });
   const fresh = prices.data && !prices.isPlaceholderData && prices.data.lines.length === priceable.length ? prices.data : null;
   const priceOf = (variantId: number) => fresh?.lines.find((l) => l.variantId === variantId);
-  const subtotal = fresh?.subtotal ?? lines.reduce((s, l) => s + (num(l.price) || 0) * (num(l.quantity) || 0), 0);
+  const customTotal = customs.reduce((s, c) => s + Math.round((num(c.price) || 0) * (num(c.quantity) || 0) * 100) / 100, 0);
+  const subtotal = (fresh?.subtotal ?? lines.reduce((s, l) => s + (num(l.price) || 0) * (num(l.quantity) || 0), 0)) + customTotal;
+  const updateCustom = (key: number, patch: Partial<CustomLine>) => setCustoms((cs) => cs.map((c) => (c.key === key ? { ...c, ...patch } : c)));
   const deliveryFee = delivery === 'order' ? null : delivery === 'free' ? 0 : num(deliveryAmount);
 
   const fields = save.error instanceof ApiError ? save.error.fields : {};
@@ -136,7 +173,11 @@ function QuotationForm({ from }: { from: Quotation | null }) {
           terms: terms.trim() || null,
           validDays,
           deliveryFee,
-          items,
+          items: [
+            ...items,
+            ...customs.map((c) => ({ custom: { name: c.name.trim(), details: c.details.trim() || null }, quantity: num(c.quantity), unitPrice: num(c.price) })),
+          ],
+          customRequestId,
         },
       },
       {
@@ -155,6 +196,12 @@ function QuotationForm({ from }: { from: Quotation | null }) {
           <ArrowLeft className="size-4" /> {from ? `Quotation ${from.number}` : 'Quotations'}
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{from ? `Revise ${from.number}` : 'New quotation'}</h1>
+        {request && (
+          <p className="mt-1 text-sm text-zinc-500">
+            For custom request {request.number}: {request.kindName} × {request.quantity} for {request.name}. Set the price per piece of the custom item.
+            {request.files.length > 0 && ' Their artwork is in Requests & Leads → Custom orders.'}
+          </p>
+        )}
         {from && <p className="mt-1 text-sm text-zinc-500">Saving makes a new quotation with a new number. {from.number} is then replaced: its page points to the new one and it can no longer be ordered.</p>}
       </div>
       {general && <ErrorAlert message={general} />}
@@ -225,7 +272,40 @@ function QuotationForm({ from }: { from: Quotation | null }) {
                   })}
                 </div>
               )}
-              {!lines.length && <p className="text-sm text-zinc-500">Search above and add products. Type a price to give a special price for this quotation.</p>}
+              {!lines.length && !customs.length && <p className="text-sm text-zinc-500">Search above and add products. Type a price to give a special price for this quotation.</p>}
+              {customs.map((c, i) => {
+                const n = items.length + i;
+                const err = fields[`items.${n}.custom.name`] ?? fields[`items.${n}.unitPrice`] ?? fields[`items.${n}.quantity`];
+                return (
+                  <div key={c.key} className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/40 p-3">
+                    <div className="flex items-center gap-2 text-xs font-medium tracking-wide text-amber-800 uppercase">
+                      <Hammer className="size-3.5" /> Custom item (made to order, no stock)
+                    </div>
+                    <div className="flex flex-wrap items-start gap-3">
+                      <Field label="Name on the quotation" htmlFor={`c-${c.key}-name`} className="min-w-56 flex-1">
+                        <Input id={`c-${c.key}-name`} value={c.name} onChange={(e) => updateCustom(c.key, { name: e.target.value })} maxLength={200} placeholder="e.g. Custom A5 notebook with school logo" />
+                      </Field>
+                      <Field label="Quantity" htmlFor={`c-${c.key}-qty`} className="w-28">
+                        <Input id={`c-${c.key}-qty`} inputMode="numeric" value={c.quantity} onChange={(e) => updateCustom(c.key, { quantity: e.target.value.replace(/\D/g, '') })} />
+                      </Field>
+                      <Field label="Price per piece" htmlFor={`c-${c.key}-price`} className="w-32">
+                        <AddonInput id={`c-${c.key}-price`} prefix="৳" inputMode="decimal" value={c.price} onChange={(e) => updateCustom(c.key, { price: e.target.value })} />
+                      </Field>
+                      <div className="w-28 pt-7 text-right font-medium text-zinc-900 tabular-nums">{formatMoney((num(c.price) || 0) * (num(c.quantity) || 0))}</div>
+                      <Button type="button" variant="ghost" size="icon" className="mt-6" onClick={() => setCustoms(customs.filter((x) => x.key !== c.key))} aria-label={`Remove ${c.name || 'custom item'}`}>
+                        <Trash2 />
+                      </Button>
+                    </div>
+                    <Field label="What it is (shown on the quotation and the order)" htmlFor={`c-${c.key}-details`}>
+                      <Textarea id={`c-${c.key}-details`} rows={3} value={c.details} onChange={(e) => updateCustom(c.key, { details: e.target.value })} maxLength={3000} />
+                    </Field>
+                    {err && <p className="text-sm text-red-600">{err}</p>}
+                  </div>
+                );
+              })}
+              <Button type="button" variant="outline" size="sm" onClick={() => setCustoms([...customs, { key: nextKey++, name: '', details: '', quantity: '1', price: '' }])}>
+                <Hammer /> Add a custom item
+              </Button>
             </CardContent>
           </Card>
 
@@ -330,7 +410,7 @@ function QuotationForm({ from }: { from: Quotation | null }) {
                 <span>Total</span>
                 <span className={cn('tabular-nums', prices.isFetching && 'opacity-60')}>{formatMoney(subtotal + (deliveryFee && Number.isFinite(deliveryFee) ? deliveryFee : 0))}</span>
               </div>
-              <Button type="submit" className="mt-3 w-full" loading={save.isPending} disabled={!lines.length}>
+              <Button type="submit" className="mt-3 w-full" loading={save.isPending} disabled={!lines.length && !customs.length}>
                 {from ? 'Save as a new version' : 'Make the quotation'}
               </Button>
               <p className="text-xs text-zinc-500">Then send it to the customer by SMS or email from its page.</p>
