@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { Check, ChevronLeft, ChevronRight, Inbox, MessageCircle, Phone, RotateCcw, Search, UserRound } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Handshake, Inbox, MessageCircle, Phone, RotateCcw, Search, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { canOpen, useMe } from '@/hooks/use-auth';
 import { useProductRequests, useUpdateProductRequest } from '@/hooks/use-search';
+import { useSupplierLeads } from '@/hooks/use-supplier-leads';
+import { SupplierLeadsPanel } from '@/components/leads/supplier-leads';
 import { errorMessage } from '@/lib/api';
 import type { ProductRequest } from '@/lib/types';
 import { cn, formatDateTime, timeAgo } from '@/lib/utils';
@@ -23,8 +25,55 @@ const VIEWS = [
 ] as const;
 type View = (typeof VIEWS)[number]['key'];
 
-/** Requests & Leads. For now: "Request this product" from the website. */
+const TABS = [
+  { key: 'requests', label: 'Product requests', Icon: Inbox },
+  { key: 'suppliers', label: 'Sell with us', Icon: Handshake },
+] as const;
+
+/** Requests & Leads: "Request this product" and "Sell with us" from the website, each on its own tab. */
 export function LeadsPage() {
+  const [params, setParams] = useSearchParams();
+  const tab = params.get('tab') === 'suppliers' ? 'suppliers' : 'requests';
+  // New ones on each tab (the same lists the tabs show first, so no extra loading).
+  const requests = useProductRequests('new', 1);
+  const suppliers = useSupplierLeads('new', 1);
+  const waiting = { requests: requests.data?.counts.new ?? 0, suppliers: suppliers.data?.counts.new ?? 0 };
+
+  return (
+    <div>
+      <PageHeader
+        title="Requests & Leads"
+        description={
+          tab === 'suppliers'
+            ? 'Brands and suppliers who want to sell through the shop (“Sell with us” on the website). Talk to them, then mark the lead done.'
+            : 'Products shoppers asked for on the website when their search found nothing. Call them back, then mark the request done.'
+        }
+      />
+      <div className="mb-4 flex gap-1 overflow-x-auto border-b border-zinc-200" role="tablist" aria-label="Kind of lead">
+        {TABS.map(({ key, label, Icon }) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={tab === key}
+            onClick={() => setParams(key === 'suppliers' ? { tab: 'suppliers' } : {})}
+            className={cn(
+              '-mb-px flex cursor-pointer items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
+              tab === key ? 'border-brand-600 text-brand-800' : 'border-transparent text-zinc-500 hover:text-zinc-800',
+            )}
+          >
+            <Icon className="size-4" /> {label}
+            {waiting[key] > 0 && <span className="rounded-full bg-amber-100 px-1.5 text-xs text-amber-800 tabular-nums">{waiting[key]}</span>}
+          </button>
+        ))}
+      </div>
+      {tab === 'suppliers' ? <SupplierLeadsPanel /> : <ProductRequestsPanel />}
+    </div>
+  );
+}
+
+/** "Request this product" from the website. */
+function ProductRequestsPanel() {
   const [params, setParams] = useSearchParams();
   const view: View = VIEWS.find((v) => v.key === params.get('view'))?.key ?? 'new';
   const page = Math.max(1, Number(params.get('page')) || 1);
@@ -49,11 +98,6 @@ export function LeadsPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Requests & Leads"
-        description="Products shoppers asked for on the website when their search found nothing. Call them back, then mark the request done."
-      />
-
       <Card className="overflow-hidden">
         <div className="flex items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50/70 px-4 py-3">
           <div className="flex rounded-lg bg-zinc-200/60 p-0.5" role="group" aria-label="Show">
