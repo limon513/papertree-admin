@@ -95,9 +95,16 @@ export interface Brand {
   isFeatured: boolean;
   seoTitle: string | null;
   seoDescription: string | null;
+  /** Where purchase orders go, for products the brand supplies. Admin only. */
+  orderEmail: string | null;
+  /** Where the brand usually delivers what we order. */
+  shipsTo: ShipsTo;
   createdAt: string;
   updatedAt: string;
 }
+
+/** Who a brand delivers our orders to: our shop, or straight to the customer. */
+export type ShipsTo = 'shop' | 'customer';
 
 /** An uploaded image, saved in several widths. */
 export interface Media {
@@ -165,6 +172,8 @@ export interface Product {
   shortDescription: string | null;
   description: string | null;
   brandId: number | null;
+  /** Not kept in stock: ordered from the brand when a customer buys it. */
+  suppliedByBrand: boolean;
   categoryIds: number[];
   primaryCategoryId: number | null;
   /** Website tags (badges). */
@@ -189,6 +198,8 @@ export interface ProductListItem {
   status: ProductStatus;
   image: Media | null;
   brand: { id: number; name: string } | null;
+  /** Not kept in stock: ordered from the brand. */
+  suppliedByBrand: boolean;
   variantCount: number;
   priceMin: number;
   priceMax: number;
@@ -405,6 +416,9 @@ export type OrderType = 'retail' | 'wholesale';
 
 export interface OrderListItem {
   id: number;
+  /** Purchase orders to brands still to send, and sent ones to cancel (order cancelled). */
+  poToSend: number;
+  poToCancel: number;
   number: number;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
@@ -434,6 +448,8 @@ export interface OrderList {
   pageSize: number;
   /** Per status, plus "open" and "all". */
   counts: Record<string, number>;
+  /** Orders in the whole shop with purchase orders to send (or to cancel) with brands. */
+  poWaiting: number;
 }
 
 export interface OrderItem {
@@ -453,6 +469,48 @@ export interface OrderItem {
   bulkPercent: number | null;
   bulkDiscount: number;
   weightGrams: number | null;
+}
+
+/** One line of a purchase order (no prices: those are settled with the brand). */
+export interface PurchaseOrderLine {
+  name: string;
+  variantLabel: string | null;
+  sku: string | null;
+  quantity: number;
+}
+
+/** A purchase order to a brand: made when the order is confirmed, sent by staff after a look. */
+export interface PurchaseOrder {
+  id: number;
+  /** "PO-1001" */
+  number: string;
+  brandId: number | null;
+  brandName: string;
+  brandSlug: string | null;
+  /** The brand's order email (null: not set yet). */
+  email: string | null;
+  status: 'draft' | 'sent' | 'cancelled';
+  shipTo: ShipsTo;
+  note: string | null;
+  /** Draft: what will be sent. Sent: what was sent. */
+  lines: PurchaseOrderLine[];
+  sentTo: string | null;
+  sentAt: string | null;
+  sentByName: string | null;
+  timesSent: number;
+  cancelSentAt: string | null;
+  /** Sent, but the order changed since: send it again. */
+  changedSinceSent: boolean;
+  /** Sent, and the order is off (or its items removed): tell the brand. */
+  needsCancel: boolean;
+}
+
+export interface PurchaseOrderPreview {
+  to: string | null;
+  subject: string;
+  html: string;
+  text: string;
+  warnings: string[];
 }
 
 export interface Order {
@@ -512,6 +570,10 @@ export interface Order {
   /** The customer's saved courier record (null: not checked), and whether it can be checked. */
   courierRecord: CourierRecordView | null;
   canCheckCourier: boolean;
+  /** Purchase orders to brands, for products they supply. */
+  purchaseOrders: PurchaseOrder[];
+  /** Products marked "supplied by the brand" that have no brand (nobody to order from). */
+  suppliedWithoutBrand: PurchaseOrderLine[];
   customer: {
     id: number;
     type: 'retail' | 'business';

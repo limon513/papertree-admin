@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { Brand, Category, IconGroup, ListResponse, Media } from '@/lib/types';
+import type { Brand, Category, IconGroup, ListResponse, Media, ShipsTo } from '@/lib/types';
 
 const CATEGORIES_KEY = ['categories'] as const;
 const BRANDS_KEY = ['brands'] as const;
@@ -29,6 +29,8 @@ export interface BrandInput {
   isFeatured: boolean;
   seoTitle: string | null;
   seoDescription: string | null;
+  orderEmail: string | null;
+  shipsTo: ShipsTo;
 }
 
 // ---- Categories ----

@@ -12,6 +12,8 @@ import type {
   OrderVariant,
   PaymentMethod,
   PaymentStatus,
+  PurchaseOrderPreview,
+  ShipsTo,
 } from '@/lib/types';
 
 const ORDERS_KEY = ['orders'] as const;
@@ -24,6 +26,8 @@ export interface OrderFilters {
   type?: OrderType;
   from?: string;
   to?: string;
+  /** waiting: orders with purchase orders to send (or to cancel) with brands. */
+  po?: 'waiting';
   page: number;
 }
 
@@ -190,5 +194,39 @@ export function useOrderDeliveryQuote(input: OrderQuoteInput) {
     enabled: input.districtId !== '',
     placeholderData: keepPreviousData,
     staleTime: 30_000,
+  });
+}
+
+// ---- Purchase orders to brands ----
+
+/** The email as the brand will get it (kind "cancel": telling the brand it is off). */
+export function usePurchaseOrderPreview(orderId: number, poId: number | null, kind: 'order' | 'cancel') {
+  return useQuery({
+    queryKey: [...ORDERS_KEY, 'po-preview', orderId, poId, kind],
+    queryFn: () => api<PurchaseOrderPreview>(`/v1/admin/orders/${orderId}/purchase-orders/${poId}/preview?kind=${kind}`),
+    enabled: poId !== null,
+    // Always fresh: it shows what is about to be sent.
+    gcTime: 0,
+  });
+}
+
+export function useUpdatePurchaseOrder(orderId: number) {
+  const saved = useOrderSaved();
+  return useMutation({
+    mutationFn: ({ poId, ...input }: { poId: number; shipTo?: ShipsTo; note?: string | null }) =>
+      api<Order>(`/v1/admin/orders/${orderId}/purchase-orders/${poId}`, { method: 'PATCH', body: input }),
+    onSuccess: saved,
+  });
+}
+
+export function useSendPurchaseOrder(orderId: number) {
+  const saved = useOrderSaved();
+  return useMutation({
+    mutationFn: ({ poId, kind }: { poId: number; kind: 'order' | 'cancel' }) =>
+      api<{ testOnly: boolean; note: string | null; order: Order }>(`/v1/admin/orders/${orderId}/purchase-orders/${poId}/send`, {
+        method: 'POST',
+        body: { kind },
+      }),
+    onSuccess: (r) => saved(r.order),
   });
 }

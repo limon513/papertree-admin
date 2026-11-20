@@ -4,6 +4,7 @@ import { useLabels } from '@/hooks/use-labels';
 import type { BulkAction } from '@/hooks/use-products';
 import type { Category } from '@/lib/types';
 import { Button } from '@/components/ui/button';
+import { ChoiceGroup } from '@/components/ui/choice';
 import { DialogBody, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { Field } from '@/components/ui/field';
 import { Select } from '@/components/ui/input';
@@ -182,6 +183,47 @@ export function BulkLabelDialog({ count, loading, onApply, onCancel }: BulkDialo
           </Button>
           <Button type="submit" loading={loading} disabled={!labelId}>
             {mode === 'add-label' ? 'Add' : 'Remove'}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
+
+/** Marks products as ordered from their brand (not in our stock), or back to our own stock. */
+export function BulkSuppliedDialog({ count, loading, onApply, onCancel }: BulkDialogProps) {
+  const [supplied, setSupplied] = useState<'yes' | 'no'>('yes');
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    onApply({ action: 'set-supplied', supplied: supplied === 'yes' });
+  };
+  return (
+    <DialogContent title={`Where ${count === 1 ? 'this product comes' : `these ${count} products come`} from`}>
+      <form onSubmit={submit}>
+        <DialogBody>
+          <ChoiceGroup
+            name="bulk-supplied"
+            label="Where they come from"
+            value={supplied}
+            onChange={setSupplied}
+            className="sm:grid-cols-1"
+            choices={[
+              {
+                value: 'yes',
+                label: 'Supplied by the brand',
+                description:
+                  'Not kept in our stock: a purchase order to the brand is made when such an order is confirmed. Their stock is no longer counted. Each product needs a brand.',
+              },
+              { value: 'no', label: 'From our stock', description: 'Normal products. Turn stock counting back on in each product if you need it.' },
+            ]}
+          />
+        </DialogBody>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={loading}>
+            Save
           </Button>
         </DialogFooter>
       </form>

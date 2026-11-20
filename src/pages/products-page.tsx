@@ -12,6 +12,7 @@ import {
   Search,
   Tag, Tags,
   Trash2,
+  Truck,
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -22,7 +23,7 @@ import type { ProductListItem, ProductStatus } from '@/lib/types';
 import { cn, formatMoney, timeAgo } from '@/lib/utils';
 import { CatalogThumb } from '@/components/catalog/catalog-thumb';
 import { PageHeader } from '@/components/layout/page-header';
-import { BulkBrandDialog, BulkCategoryDialog, BulkLabelDialog } from '@/components/products/bulk-dialogs';
+import { BulkBrandDialog, BulkCategoryDialog, BulkLabelDialog, BulkSuppliedDialog } from '@/components/products/bulk-dialogs';
 import { useLabels } from '@/hooks/use-labels';
 import { QuickStockDialog } from '@/components/products/quick-stock-dialog';
 import { STATUS_INFO } from '@/components/products/status';
@@ -51,7 +52,7 @@ const SORTS = {
 
 const STATUS_DONE: Record<ProductStatus, string> = { active: 'published', draft: 'moved to drafts', archived: 'archived' };
 
-type BulkDialog = 'category' | 'brand' | 'label' | 'delete' | null;
+type BulkDialog = 'category' | 'brand' | 'label' | 'supplied' | 'delete' | null;
 
 export function ProductsPage() {
   const navigate = useNavigate();
@@ -69,6 +70,7 @@ export function ProductsPage() {
     categoryId: params.get('category') ? Number(params.get('category')) : undefined,
     labelId: params.get('label') ? Number(params.get('label')) : undefined,
     stock: (params.get('stock') as ProductFilters['stock'] | null) ?? undefined,
+    supplied: params.get('supplied') === 'brand' ? 'brand' : undefined,
     sort: (params.get('sort') as ProductFilters['sort']) ?? 'updated',
     page: Number(params.get('page') ?? 1),
   };
@@ -100,7 +102,7 @@ export function ProductsPage() {
 
   const data = products.data;
   const items = data?.items ?? [];
-  const hasFilters = Boolean(filters.search || filters.brandId || filters.categoryId || filters.labelId || filters.stock);
+  const hasFilters = Boolean(filters.search || filters.brandId || filters.categoryId || filters.labelId || filters.stock || filters.supplied);
   const first = data ? (data.page - 1) * data.pageSize + 1 : 0;
   const last = data ? Math.min(data.page * data.pageSize, data.total) : 0;
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
@@ -140,6 +142,8 @@ export function ProductsPage() {
                 ? `${n} deleted`
                 : action.action === 'set-brand'
                   ? `Brand set on ${n}`
+                  : action.action === 'set-supplied'
+                    ? `${n} now ${action.supplied ? 'supplied by the brand' : 'from our stock'}`
                   : updated === 0
                     ? 'Nothing to change'
                     : action.action === 'add-label' || action.action === 'remove-label'
@@ -266,14 +270,24 @@ export function ProductsPage() {
                 </Select>
               )}
               <Select
-                value={filters.stock ?? ''}
-                onChange={(e) => setParam('stock', e.target.value || undefined)}
+                value={filters.supplied ? 'supplied' : (filters.stock ?? '')}
+                onChange={(e) => {
+                  // One menu for both: stock levels, or products the brand supplies.
+                  const value = e.target.value;
+                  setSelected(new Set());
+                  const next = new URLSearchParams(window.location.search);
+                  for (const key of ['stock', 'supplied', 'page']) next.delete(key);
+                  if (value === 'supplied') next.set('supplied', 'brand');
+                  else if (value) next.set('stock', value);
+                  setParams(next, { replace: true });
+                }}
                 className="h-9"
                 aria-label="Filter by stock"
               >
                 <option value="">All stock</option>
                 <option value="low">Low stock</option>
                 <option value="out">Out of stock</option>
+                <option value="supplied">Supplied by the brand</option>
               </Select>
               <Select
                 value={filters.sort}
@@ -409,6 +423,9 @@ export function ProductsPage() {
             <Button variant="outline" size="sm" disabled={bulk.isPending} onClick={() => setDialog('label')}>
               <Tag /> Tag
             </Button>
+            <Button variant="outline" size="sm" disabled={bulk.isPending} onClick={() => setDialog('supplied')}>
+              <Truck /> Supplied by brand
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -422,7 +439,10 @@ export function ProductsPage() {
         </div>
       )}
 
-      <Dialog open={dialog === 'category' || dialog === 'brand' || dialog === 'label'} onOpenChange={(open) => !open && setDialog(null)}>
+      <Dialog
+        open={dialog === 'category' || dialog === 'brand' || dialog === 'label' || dialog === 'supplied'}
+        onOpenChange={(open) => !open && setDialog(null)}
+      >
         {dialog === 'category' && (
           <BulkCategoryDialog count={selected.size} loading={bulk.isPending} onApply={runBulk} onCancel={() => setDialog(null)} />
         )}
@@ -430,6 +450,9 @@ export function ProductsPage() {
           <BulkBrandDialog count={selected.size} loading={bulk.isPending} onApply={runBulk} onCancel={() => setDialog(null)} />
         )}
         {dialog === 'label' && <BulkLabelDialog count={selected.size} loading={bulk.isPending} onApply={runBulk} onCancel={() => setDialog(null)} />}
+        {dialog === 'supplied' && (
+          <BulkSuppliedDialog count={selected.size} loading={bulk.isPending} onApply={runBulk} onCancel={() => setDialog(null)} />
+        )}
       </Dialog>
 
       <ConfirmDialog
@@ -464,7 +487,11 @@ function StockCell({ product: p, onClick }: { product: ProductListItem; onClick:
       title="Change stock"
       className="-mx-2 cursor-pointer rounded-md px-2 py-1 text-left hover:bg-zinc-100"
     >
-      {p.totalStock === null ? (
+      {p.suppliedByBrand ? (
+        <span className="flex items-center gap-1 text-zinc-600">
+          <Truck className="size-3.5" /> From the brand
+        </span>
+      ) : p.totalStock === null ? (
         <span className="text-zinc-400">Not tracked</span>
       ) : p.totalStock <= 0 ? (
         <span className="font-medium text-red-600">Out of stock</span>
