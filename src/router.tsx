@@ -268,6 +268,32 @@ export const router = createBrowserRouter([
             },
           },
           {
+            path: 'quotations/new',
+            lazy: async () => {
+              const { QuotationEditPage } = await import('@/pages/quotation-edit-page');
+              return {
+                Component: () => (
+                  <RequireModule module="orders">
+                    <QuotationEditPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
+            path: 'quotations/:id/revise',
+            lazy: async () => {
+              const { QuotationEditPage } = await import('@/pages/quotation-edit-page');
+              return {
+                Component: () => (
+                  <RequireModule module="orders">
+                    <QuotationEditPage />
+                  </RequireModule>
+                ),
+              };
+            },
+          },
+          {
             path: 'quotations/:id',
             lazy: async () => {
               const { QuotationPage } = await import('@/pages/quotation-page');
