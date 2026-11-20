@@ -53,6 +53,7 @@ export interface ProductForm {
   shortDescription: string;
   description: string;
   brandId: number | null;
+  suppliedByBrand: boolean;
   categoryIds: number[];
   primaryCategoryId: number | null;
   labelIds: number[];
@@ -109,6 +110,7 @@ export function fromProduct(p?: Product): ProductForm {
       shortDescription: '',
       description: '',
       brandId: null,
+      suppliedByBrand: false,
       categoryIds: [],
       primaryCategoryId: null,
       labelIds: [],
@@ -130,6 +132,7 @@ export function fromProduct(p?: Product): ProductForm {
     shortDescription: p.shortDescription ?? '',
     description: p.description ?? '',
     brandId: p.brandId,
+    suppliedByBrand: p.suppliedByBrand,
     categoryIds: p.categoryIds,
     primaryCategoryId: p.primaryCategoryId,
     labelIds: p.labelIds ?? [],
@@ -184,6 +187,7 @@ export function toInput(form: ProductForm, locations: StockLocation[]): ProductI
     shortDescription: form.shortDescription.trim() || null,
     description: form.description || null,
     brandId: form.brandId,
+    suppliedByBrand: form.suppliedByBrand,
     categoryIds: form.categoryIds,
     primaryCategoryId: form.primaryCategoryId,
     labelIds: form.labelIds,

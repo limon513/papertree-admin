@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { ChevronLeft, ChevronRight, Plus, Search, ShoppingCart, Truck, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, PackageOpen, Plus, Search, ShoppingCart, Truck, X } from 'lucide-react';
 import { useOrders, type OrderFilters } from '@/hooks/use-orders';
 import { errorMessage } from '@/lib/api';
 import type { OrderChannel, OrderStatus, OrderType, PaymentStatus } from '@/lib/types';
@@ -43,6 +43,7 @@ export function OrdersPage() {
     type: (params.get('type') as OrderType | null) ?? undefined,
     from: params.get('from') ?? undefined,
     to: params.get('to') ?? undefined,
+    po: params.get('po') === 'waiting' ? 'waiting' : undefined,
     page: Number(params.get('page') ?? 1),
   };
   const orders = useOrders(filters);
@@ -78,7 +79,15 @@ export function OrdersPage() {
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
   const first = data ? (data.page - 1) * data.pageSize + 1 : 0;
   const last = data ? Math.min(data.page * data.pageSize, data.total) : 0;
-  const hasFilters = Boolean(filters.search || filters.payment || filters.channel || filters.type || filters.from || filters.to);
+  const hasFilters = Boolean(filters.search || filters.payment || filters.channel || filters.type || filters.from || filters.to || filters.po);
+  // Orders with purchase orders to brands waiting: all of them, whatever their step.
+  const showWaiting = () => {
+    const next = new URLSearchParams(window.location.search);
+    next.set('po', 'waiting');
+    next.set('status', 'all');
+    next.delete('page');
+    setParams(next, { replace: true });
+  };
 
   return (
     <div className="space-y-6">
@@ -93,6 +102,30 @@ export function OrdersPage() {
           </Button>
         }
       />
+
+      {filters.po ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
+          <PackageOpen className="size-4" /> Showing orders with purchase orders to send to brands (or to cancel with them).
+          <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setParam('po', undefined)}>
+            <X /> Show all orders
+          </Button>
+        </div>
+      ) : (
+        data &&
+        data.poWaiting > 0 && (
+          <button
+            type="button"
+            onClick={showWaiting}
+            className="flex w-full cursor-pointer flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-left text-sm text-amber-900 hover:bg-amber-100/70"
+          >
+            <PackageOpen className="size-4" />
+            <span>
+              <strong>{data.poWaiting}</strong> order{data.poWaiting === 1 ? ' has' : 's have'} purchase orders waiting to be sent to brands.
+            </span>
+            <span className="ml-auto font-medium underline">Show them</span>
+          </button>
+        )
+      )}
 
       <Card className="overflow-hidden">
         <div className="flex gap-1 overflow-x-auto border-b border-zinc-200 px-3 pt-2">
@@ -217,6 +250,16 @@ export function OrdersPage() {
                       <div className="flex flex-col items-start gap-1">
                         <OrderStatusBadge status={o.status} />
                         <CourierStatusBadge status={o.courierStatus} />
+                        {o.poToSend > 0 && (
+                          <Badge variant="amber" title="Purchase orders to brands, not sent yet">
+                            <PackageOpen /> PO to send
+                          </Badge>
+                        )}
+                        {o.poToCancel > 0 && (
+                          <Badge variant="red" title="A purchase order was sent: tell the brand the order is off">
+                            <PackageOpen /> Tell brand: cancelled
+                          </Badge>
+                        )}
                       </div>
                     </td>
                     <td className="hidden px-3 py-3 md:table-cell">

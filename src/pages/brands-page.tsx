@@ -1,10 +1,10 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { Eye, EyeOff, MoreHorizontal, Pencil, Plus, Search, Star, StarOff, Tags, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, MoreHorizontal, Pencil, Plus, Search, Star, StarOff, Store, Tags, Trash2, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBrands, useDeleteBrand, useSaveBrand, type BrandInput } from '@/hooks/use-catalog';
 import { ApiError, errorMessage } from '@/lib/api';
 import { STORE_PATHS } from '@/lib/store';
-import type { Brand, Media } from '@/lib/types';
+import type { Brand, Media, ShipsTo } from '@/lib/types';
 import { cn, slugify } from '@/lib/utils';
 import { CatalogThumb } from '@/components/catalog/catalog-thumb';
 import { PictureField } from '@/components/catalog/picture-field';
@@ -14,6 +14,7 @@ import { PageHeader } from '@/components/layout/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ChoiceGroup } from '@/components/ui/choice';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Dialog, DialogBody, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import {
@@ -207,6 +208,11 @@ export function BrandsPage() {
                                   <Star /> Featured
                                 </Badge>
                               )}
+                              {brand.orderEmail && (
+                                <Badge title={`Purchase orders go to ${brand.orderEmail}`}>
+                                  <Mail /> Orders by email
+                                </Badge>
+                              )}
                             </div>
                           </td>
                           <td className="px-5 py-3 text-right">
@@ -308,6 +314,8 @@ function BrandFormDialog({ brand, onDone }: { brand: Brand | null; onDone: () =>
   const [isFeatured, setIsFeatured] = useState(brand?.isFeatured ?? false);
   const [seoTitle, setSeoTitle] = useState(brand?.seoTitle ?? '');
   const [seoDescription, setSeoDescription] = useState(brand?.seoDescription ?? '');
+  const [orderEmail, setOrderEmail] = useState(brand?.orderEmail ?? '');
+  const [shipsTo, setShipsTo] = useState<ShipsTo>(brand?.shipsTo ?? 'shop');
 
   const fields = save.error instanceof ApiError ? save.error.fields : {};
   const generalError = save.isError && Object.keys(fields).length === 0 ? errorMessage(save.error) : null;
@@ -324,6 +332,8 @@ function BrandFormDialog({ brand, onDone }: { brand: Brand | null; onDone: () =>
       isFeatured,
       seoTitle: seoTitle.trim() || null,
       seoDescription: seoDescription.trim() || null,
+      orderEmail: orderEmail.trim() || null,
+      shipsTo,
     };
     save.mutate(
       { id: brand?.id, input },
@@ -402,6 +412,39 @@ function BrandFormDialog({ brand, onDone }: { brand: Brand | null; onDone: () =>
               onCheckedChange={setIsFeatured}
             />
           </div>
+
+          <fieldset className="space-y-3 rounded-xl border border-zinc-200 p-4">
+            <legend className="px-1 text-sm font-semibold text-zinc-900">Ordering from this brand</legend>
+            <p className="-mt-1 text-xs text-zinc-500">
+              For products marked “Supplied by the brand”: when such an order is confirmed, a purchase order email is made for
+              this brand to check and send. Never shown on the website.
+            </p>
+            <Field label="Order email" htmlFor="brand-order-email" error={fields.orderEmail} hint="Where purchase orders go.">
+              <Input
+                id="brand-order-email"
+                type="email"
+                value={orderEmail}
+                onChange={(e) => setOrderEmail(e.target.value)}
+                invalid={!!fields.orderEmail}
+                placeholder="orders@brand.com"
+                autoComplete="off"
+              />
+            </Field>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium text-zinc-800">Usually delivers to</p>
+              <ChoiceGroup
+                name="brand-ships-to"
+                label="Usually delivers to"
+                value={shipsTo}
+                onChange={setShipsTo}
+                choices={[
+                  { value: 'shop', label: 'Our shop', icon: <Store />, description: 'We send it on to the customer.' },
+                  { value: 'customer', label: 'The customer', icon: <Truck />, description: 'Straight to the customer’s address.' },
+                ]}
+              />
+              <p className="text-xs text-zinc-500">Can be changed on each order before sending.</p>
+            </div>
+          </fieldset>
 
           <SeoFields
             idPrefix="brand"

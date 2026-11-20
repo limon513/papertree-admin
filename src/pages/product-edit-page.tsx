@@ -46,6 +46,7 @@ import {
 import { Field } from '@/components/ui/field';
 import { Input, Select, Textarea } from '@/components/ui/input';
 import { ErrorAlert, LoadError, Skeleton } from '@/components/ui/misc';
+import { SwitchField } from '@/components/ui/switch';
 import { TagsInput } from '@/components/ui/tags-input';
 import { LabelPicker } from '@/components/products/label-picker';
 import { BulkTiersEditor, describeTiers, toTierForms } from '@/components/settings/bulk-tiers';
@@ -138,6 +139,7 @@ function ProductEditor({ product }: { product: Product | undefined }) {
   }, [dirty]);
 
   const set = (patch: Partial<ProductForm>) => setForm((f) => ({ ...f, ...patch }));
+  const supplier = brands.data?.items.find((b) => b.id === form.brandId) ?? null;
   const setVariant = (index: number, patch: Partial<VariantForm>) =>
     setForm((f) => ({ ...f, variants: f.variants.map((v, i) => (i === index ? { ...v, ...patch } : v)) }));
   const setOptions = (options: OptionForm[]) =>
@@ -406,6 +408,28 @@ function ProductEditor({ product }: { product: Product | undefined }) {
                 ))}
               </Select>
             </Field>
+            <div>
+              <SwitchField
+                id="product-supplied"
+                label="Supplied by the brand"
+                description="Not kept in our stock. When an order with it is confirmed, a purchase order to the brand is made for you to check and send."
+                checked={form.suppliedByBrand}
+                onCheckedChange={(on) =>
+                  // Not in our stock: its stock is not counted, so it never shows as sold out.
+                  set(on ? { suppliedByBrand: true, variants: form.variants.map((v) => ({ ...v, trackStock: false })) } : { suppliedByBrand: false })
+                }
+              />
+              {form.suppliedByBrand && !form.brandId && <p className="mt-1.5 text-xs text-red-600">Choose the brand that supplies it.</p>}
+              {form.suppliedByBrand && supplier && !supplier.orderEmail && (
+                <p className="mt-1.5 text-xs text-amber-700">
+                  {supplier.name} has no order email yet. Add it under{' '}
+                  <Link to="/brands" className="font-medium underline">
+                    Brands
+                  </Link>
+                  .
+                </p>
+              )}
+            </div>
             <div>
               <div className="mb-1.5 text-sm font-medium text-zinc-800">Categories</div>
               <CategoryPicker

@@ -12,6 +12,8 @@ export interface ProductFilters {
   /** Products with this website tag. */
   labelId?: number;
   stock?: 'low' | 'out';
+  /** brand: only products supplied by their brand. */
+  supplied?: 'brand';
   sort?: 'updated' | 'name' | 'price' | 'stock';
   page?: number;
 }
@@ -24,6 +26,7 @@ export interface ProductInput {
   shortDescription: string | null;
   description: string | null;
   brandId: number | null;
+  suppliedByBrand: boolean;
   categoryIds: number[];
   primaryCategoryId: number | null;
   /** Website tags (badges). */
@@ -123,6 +126,7 @@ export type BulkAction =
   | { action: 'add-category' | 'remove-category'; categoryId: number }
   | { action: 'set-brand'; brandId: number | null }
   | { action: 'add-label' | 'remove-label'; labelId: number }
+  | { action: 'set-supplied'; supplied: boolean }
   | { action: 'delete' };
 
 /** One change for many products. */

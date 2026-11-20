@@ -10,6 +10,7 @@ import { cn, formatDateTime, formatMoney, timeAgo } from '@/lib/utils';
 import { CHANNELS, ORDER_STATUS, orderNo, OrderStatusBadge, PAYMENT_METHODS, PaymentBadge } from '@/components/orders/labels';
 import { CourierStatusBadge, SendToSteadfastDialog, useRefreshCourier, whyNotSendable } from '@/components/orders/steadfast';
 import { CourierRecordCard } from '@/components/orders/courier-record';
+import { PurchaseOrdersCard } from '@/components/orders/purchase-orders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -138,6 +139,8 @@ export function OrderPage() {
               </div>
             </dl>
           </Card>
+
+          <PurchaseOrdersCard order={o} />
 
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
@@ -325,8 +328,13 @@ function StatusDialog({ order, to, onDone }: { order: Order; to: OrderStatus; on
         notify: canNotify && notify,
       },
       {
-        onSuccess: () => {
+        onSuccess: (saved) => {
           toast.success(`Order ${orderNo(order.number)}: ${ORDER_STATUS[to].label.toLowerCase()}`);
+          const drafts = saved.purchaseOrders.filter((p) => p.status === 'draft');
+          if (drafts.length) {
+            toast.info(`Purchase order${drafts.length === 1 ? '' : 's'} ready for ${drafts.map((p) => p.brandName).join(', ')}: check and send below.`);
+          }
+          if (saved.purchaseOrders.some((p) => p.needsCancel)) toast.warning('A purchase order was sent for this order: tell the brand to cancel it (below).');
           onDone();
         },
       },
