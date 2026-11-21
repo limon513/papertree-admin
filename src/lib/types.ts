@@ -722,6 +722,18 @@ export interface SearchReport {
 
 export type ProductRequestStatus = 'new' | 'done';
 
+/** Search by photo on the website: numbers, and photos that found nothing close (kept 30 days). */
+export interface PhotoSearchReport {
+  days: number;
+  enabled: boolean;
+  keepDays: number;
+  closeMatch: number;
+  /** Product pictures ready for search by photo. */
+  pictures: { total: number; ready: number };
+  totals: { searches: number; matched: number; cropped: number };
+  noMatch: { id: number; at: string; photoUrl: string; bestScore: number | null; results: number; device: string | null; nearest: { name: string; slug: string } | null }[];
+}
+
 /** "Request this product" from the website. */
 export interface ProductRequest {
   id: number;
@@ -736,6 +748,8 @@ export interface ProductRequest {
   createdAt: string;
   /** A customer with this phone number. */
   customerId: number | null;
+  /** A photo of what they want (sent from search by photo). */
+  photoUrl: string | null;
 }
 
 export interface ProductRequestList {

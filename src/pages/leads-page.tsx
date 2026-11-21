@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { Check, ChevronLeft, ChevronRight, Hammer, Handshake, Inbox, MessageCircle, Phone, RotateCcw, Search, UserRound } from 'lucide-react';
+import { Camera, Check, ChevronLeft, ChevronRight, Hammer, Handshake, Inbox, MessageCircle, Phone, RotateCcw, Search, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { canOpen, useMe } from '@/hooks/use-auth';
 import { useProductRequests, useUpdateProductRequest } from '@/hooks/use-search';
@@ -148,9 +148,18 @@ function ProductRequestsPanel() {
           <ul className={cn('divide-y divide-zinc-100', requests.isPlaceholderData && 'opacity-60')}>
             {data.items.map((r) => (
               <li key={r.id} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start">
+                {r.photoUrl && (
+                  <a href={r.photoUrl} target="_blank" rel="noopener noreferrer" title="Open the photo" className="block size-24 shrink-0 overflow-hidden rounded-lg bg-zinc-100 ring-1 ring-zinc-200 hover:ring-brand-400">
+                    <img src={r.photoUrl} alt="The shopper's photo" className="size-full object-cover" loading="lazy" />
+                  </a>
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-zinc-900">{r.details}</p>
-                  {r.query && r.query.toLowerCase() !== r.details.toLowerCase() && (
+                  {r.photoUrl ? (
+                    <p className="mt-0.5 flex items-center gap-1 text-sm text-zinc-500">
+                      <Camera className="size-3.5" /> Sent from search by photo: nothing close was found
+                    </p>
+                  ) : r.query && r.query.toLowerCase() !== r.details.toLowerCase() && (
                     <p className="mt-0.5 flex items-center gap-1 text-sm text-zinc-500">
                       <Search className="size-3.5" /> Searched “{r.query}”
                     </p>
