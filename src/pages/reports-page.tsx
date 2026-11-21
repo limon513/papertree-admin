@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/layout/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadError, Skeleton } from '@/components/ui/misc';
+import { PhotoSearches } from '@/components/leads/photo-searches';
 
 const PERIODS = [7, 30, 90] as const;
 
@@ -105,6 +106,8 @@ export function ReportsPage() {
               )}
             />
           </div>
+
+          <PhotoSearches days={days} />
         </div>
       )}
     </div>
